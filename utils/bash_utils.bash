@@ -1,4 +1,4 @@
-#/bin/bash
+#!/bin/bash
 
 # Prepare Python command. Gitbash on Windows requires a special invocation, otherwise it
 # hangs for some reason.
@@ -67,11 +67,10 @@ project_dir_list() {
 
 	get_branchname() {
         workspace="$1"
-        cd "$workspace" 2>/dev/null
-		if [ $? != 0 ]; then
+        cd "$workspace" 2>/dev/null || {
 			echo "(<ERROR>)"
 			return
-		fi
+		}
 		branch="$(git branch --show-current)"
 		if [ -n "$branch" ]; then
 			echo "($branch)"
@@ -81,7 +80,7 @@ project_dir_list() {
 	}
 
 	echo "$project_name_friendly workspaces:"
-	for workspace in $(find $DUSH_WORKSPACE/ -maxdepth 1 -regex ".*/$project_name[0-9]*$"); do
+	for workspace in $(find $DUSH_WORKSPACE/ -maxdepth 1 -regex ".*/$project_name""[0-9]*$"); do
 		branch="$(get_branchname "$workspace/$project_dir_inside_root")"
 		echo "    $workspace     $branch"
 	done
@@ -103,7 +102,7 @@ project_dir_cd() {
 	index="$2"
 	project_dir_inside_root="$3"
 
-	cd "$DUSH_WORKSPACE/$project_name$index/$project_dir_inside_root"
+	cd "$DUSH_WORKSPACE/$project_name$index/$project_dir_inside_root" || return 1
 }
 
 
