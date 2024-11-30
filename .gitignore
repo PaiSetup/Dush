@@ -1,0 +1,6 @@
+.vscode
+*.py[cod]
+projects/amd
+projects/intel
+projects/nvidia
+
