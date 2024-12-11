@@ -1,12 +1,11 @@
 from utils import run_command
-from utils.os_function import windows_only, linux_only
-from utils.build_config import Compiler, BuildType, Bitness
+from utils.os_function import is_linux
+from utils.build_config import Compiler, Bitness
 from pathlib import Path
 
 class IncorrectGitWorkspaceError(Exception):
     pass
 
-@windows_only
 def generate_config_options(config):
     options = ""
     if config.compiler == Compiler.VisualStudio:
@@ -19,6 +18,11 @@ def generate_config_options(config):
             raise KeyError("Unsupported bitness")
     elif config.compiler == Compiler.Ninja:
         options += " -G Ninja"
+        if is_linux() and config.bitness == Bitness.x32:
+            options += [
+                "-DCMAKE_C_FLAGS=-m32",
+                "-DCMAKE_CXX_FLAGS=-m32",
+            ]
     else:
         raise KeyError("Unsupported bitness")
     return options
