@@ -35,11 +35,25 @@ class EnvSaver:
         self._saved_env = os.environ
         return self
 
+    def prepend_paths(self, env_name, separator, paths):
+        if not paths:
+            return
+
+        new_paths = separator.join((str(x) for x in paths))
+        current_path = os.environ.get(env_name, default="")
+        if current_path:
+            os.environ[env_name] = new_paths + separator + current_path
+        else:
+            os.environ[env_name] = new_paths
+
+    def set(self, env_name, value):
+        os.environ[str(env_name)] = str(value)
+
     def __exit__(self, *args):
         os.environ = self._saved_env
-        
 
-def run_command(raw_command, *, shell=False, stdin=subprocess.PIPE, return_stdout=False, print_stdout=True, ignore_error=False, env={}, paths=[], generate_bat=False, timeout_seconds=None):
+
+def run_command(raw_command, *, shell=False, stdin=subprocess.PIPE, return_stdout=False, print_stdout=True, ignore_error=False, env={}, paths=[], ld_library_paths=[], generate_bat=False, timeout_seconds=None):
     if generate_bat:
         separator = "------------------------------"
         lines = [
@@ -78,19 +92,14 @@ def run_command(raw_command, *, shell=False, stdin=subprocess.PIPE, return_stdou
     if print_stdout:
         stdout = None
 
-    with EnvSaver():
+    with EnvSaver() as env_state:
         # Set new env variables
         for key, value in env.items():
-            os.environ[key] = str(value)
+            env_state.set(key, value)
 
         # Prepend new paths to current PATH value
-        if paths:
-            new_paths = os.pathsep.join((str(x) for x in paths))
-            current_path = os.environ.get("PATH", default="")
-            if current_path:
-                os.environ["PATH"] = new_paths + os.pathsep + current_path
-            else:
-                os.environ["PATH"] = new_paths
+        env_state.prepend_paths("PATH", os.pathsep, paths)
+        env_state.prepend_paths("LD_LIBRARY_PATH", ':', ld_library_paths)
 
         # Execute the command and wait for it to return
         process = subprocess.Popen(command, shell=shell, stdin=stdin, stdout=stdout, stderr=stdout)

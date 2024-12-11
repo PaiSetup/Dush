@@ -11,14 +11,14 @@ import re
 class CompilationFailedError(Exception):
     pass
 
-def compile_with_cmake(config, build_dir, targets, env={}):
+def compile_with_cmake(config, build_dir, targets, additional_env={}, additional_paths=[], additional_ld_library_paths=[]):
     build_type_args = ""
     if config.compiler == Compiler.VisualStudio:
         build_type_args = f"--config {config.build_type}"
 
     command = f'cmake --build "{build_dir}" --target {targets} {build_type_args}'
     try:
-        run_command(command, env=env)
+        run_command(command, paths=additional_paths, env=additional_env, ld_library_paths=additional_ld_library_paths)
     except CommandError:
         raise CompilationFailedError("Compilation failed")
 

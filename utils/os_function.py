@@ -12,9 +12,7 @@ def _os_function(plat, func, frame):
                 f"Function {func.__name__} is not defined "
                 f"for platform {platform.system()}.")
         return _not_implemented
-            
 
-    
 def linux_only(func):
     return _os_function('Linux', func, sys._getframe().f_back)
 
@@ -23,3 +21,6 @@ def windows_only(func):
 
 def is_windows():
     return platform.system() == "Windows"
+
+def is_linux():
+    return platform.system() == "Linux"

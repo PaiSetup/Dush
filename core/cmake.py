@@ -75,6 +75,7 @@ def cmake(config, build_dir, source_dir,
           additional_cmake_options : list,
           additional_paths : list,
           additional_env : dict,
+          additional_ld_library_paths : list,
           *,
           append_config_options = True,
           verbose = True):
@@ -90,6 +91,6 @@ def cmake(config, build_dir, source_dir,
     if verbose:
         print(command)
 
-    run_command(command, env=additional_env, paths=additional_paths)
+    run_command(command, env=additional_env, paths=additional_paths, ld_library_paths=additional_ld_library_paths)
 
     setup_git_exclude_for_build_directory(build_dir)
