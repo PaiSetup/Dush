@@ -2,6 +2,8 @@ import subprocess
 import shlex
 import os
 from utils.os_function import is_windows, windows_only
+from utils.paths import RaiiChdir
+from contextlib import ExitStack
 import platform
 
 
@@ -53,53 +55,85 @@ class EnvSaver:
         os.environ = self._saved_env
 
 
-def run_command(raw_command, *, shell=False, stdin=subprocess.PIPE, return_stdout=False, print_stdout=True, ignore_error=False, env={}, paths=[], ld_library_paths=[], generate_bat=False, timeout_seconds=None):
+def generate_bat_script(raw_command, cwd, paths, env):
+    separator = "------------------------------"
+    lines = [
+        separator,
+        "@echo off",
+        "",
+    ]
+
+    if cwd:
+        lines.append("REM set directory")
+        lines.append(f'cd "{cwd}"')
+
+    if paths:
+        lines.append("REM Setup paths")
+        for p in reversed(paths):
+            lines.append(f"set PATH={p};%PATH%")
+        lines.append("")
+
+    if env:
+        lines.append("REM Setup environment variables")
+        for key, value in env.items():
+            lines.append(f"set {key}={value}")
+        lines.append("")
+
+    lines.append("@echo on")
+    lines.append(f"call {raw_command}")
+    lines.append(separator)
+
+    for line in lines:
+        print(line)
+
+def run_command(
+    raw_command,
+    *,
+    shell=False,
+    stdin=subprocess.PIPE,
+    return_stdout=False,
+    print_stdout=True,
+    ignore_error=False,
+    cwd = None,
+    env={},
+    paths=[],
+    ld_library_paths=[],
+    generate_bat=False,
+    timeout_seconds=None
+):
+    # Debug options
     if generate_bat:
-        separator = "------------------------------"
-        lines = [
-            separator,
-            "@echo off",
-            "",
-        ]
+        generate_bat_script(raw_command, cwd, paths, env)
 
-        if paths:
-            lines.append("REM Setup paths")
-            for p in reversed(paths):
-                lines.append(f"set PATH={p};%PATH%")
-            lines.append("")
-
-        if env:
-            lines.append("REM Setup environment variables")
-            for key, value in env.items():
-                lines.append(f"set {key}={value}")
-            lines.append("")
-
-        lines.append("@echo on")
-        lines.append(f"call {raw_command}")
-        lines.append(separator)
-
-        for line in lines:
-            print(line)
-
+    # Prepare command to execute
     if not shell and platform.system() != "Windows":
         command = shlex.split(raw_command)
     else:
         command = raw_command
 
+    # Prepare handle for stdout/stderr
     if return_stdout and print_stdout:
         raise ValueError("Returning and printing stdout at the same time is not supported")
     stdout = subprocess.PIPE
     if print_stdout:
         stdout = None
 
-    with EnvSaver() as env_state:
-        # Set new env variables
-        for key, value in env.items():
-            env_state.set(key, value)
+    with ExitStack() as context:
+        # Set cwd
+        if cwd:
+            context.enter_context(RaiiChdir(cwd))
 
-        # Prepend new paths to current PATH value
-        env_state.prepend_paths("PATH", os.pathsep, paths)
-        env_state.prepend_paths("LD_LIBRARY_PATH", ':', ld_library_paths)
+        # Set environment
+        if env or paths or ld_library_paths:
+            env_state = context.enter_context(EnvSaver())
+
+            # Set key/value environment variables
+            for key, value in env.items():
+                env_state.set(key, value)
+
+            # Prepend new paths to current PATH and LD_LIBRARY_PATH values
+            env_state.prepend_paths("PATH", os.pathsep, paths)
+            env_state.prepend_paths("LD_LIBRARY_PATH", ':', ld_library_paths)
 
         # Execute the command and wait for it to return
         process = subprocess.Popen(command, shell=shell, stdin=stdin, stdout=stdout, stderr=stdout)

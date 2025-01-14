@@ -1,5 +1,4 @@
 from utils.run_command import run_command, wrap_command_with_vcvarsall
-from utils import RaiiChdir
 from utils.build_config import BuildType
 from utils.os_function import windows_only
 
@@ -11,8 +10,7 @@ def qmake(source_file, build_dir, config, qt_path, vc_varsall_path=None):
     if vc_varsall_path is not None:
         command = wrap_command_with_vcvarsall(vc_varsall_path, command)
     build_dir.mkdir(parents=True, exist_ok=True)
-    with RaiiChdir(build_dir):
-        run_command(command)
+    run_command(command, cwd=build_dir)
 
 @windows_only
 def qmake_deploy(qt_path, exe_path):

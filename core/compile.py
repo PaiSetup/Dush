@@ -1,9 +1,8 @@
 from utils.build_config import Compiler, Bitness
 from utils.run_command import run_command, wrap_command_with_vcvarsall, CommandError, CommandTimeout
-from utils import windows_only, RaiiChdir, EnvPath
+from utils import windows_only, EnvPath
 import xml.etree.ElementTree as XmlElementTree
 import multiprocessing
-from contextlib import ExitStack
 from pathlib import Path
 import os
 import re
@@ -65,14 +64,8 @@ def compile_with_make(target="",
     if verbose:
         env["VERBOSE"] = "1"
 
-    with ExitStack() as with_stack:
-        # TODO move this to run_command
-        # This is equivalent to "with RaiiChdir(...)"", but we can do it conditionally
-        if directory is not None:
-            with_stack.enter_context(RaiiChdir(directory))
-
-        command = f"make {target} {parallelism_arg}"
-        run_command(command, env=env, paths=additional_paths)
+    command = f"make {target} {parallelism_arg}"
+    run_command(command, env=env, paths=additional_paths, cwd=directory)
 
 @windows_only
 def compile_with_nmake(target="",
@@ -92,13 +85,7 @@ def compile_with_nmake(target="",
     if vc_varsall_path is not None:
         command = wrap_command_with_vcvarsall(vc_varsall_path, command, verbose)
 
-    with ExitStack() as with_stack:
-        # TODO move this to run_command
-        # This is equivalent to "with RaiiChdir(...)"", but we can do it conditionally
-        if directory is not None:
-            with_stack.enter_context(RaiiChdir(directory))
-
-        run_command(command, env=additional_env, paths=additional_paths)
+    run_command(command, env=additional_env, paths=additional_paths, cwd=directory)
 
 @windows_only
 def extract_target_names_from_msbuild_metaproj(msbuild_path, config, solution_path, env={}, cleanup_root_dir=None):
