@@ -1,7 +1,7 @@
 import subprocess
 import shlex
 import os
-from utils.os_function import is_windows
+from utils.os_function import is_windows, windows_only
 import platform
 
 
@@ -115,6 +115,27 @@ def run_command(raw_command, *, shell=False, stdin=subprocess.PIPE, return_stdou
 
     if return_stdout and output[0] != None:
         return output[0].decode("utf-8")
+
+@windows_only
+def wrap_command_with_vcvarsall(vc_varsall_path, command, verbose=False):
+    vc_varsall_command = f'"{vc_varsall_path}" amd64'
+
+    if verbose:
+        wrapped_command = [
+            vc_varsall_command,
+            "echo",
+            "echo Testing 'where cl'",
+            "where cl",
+            command,
+        ]
+    else:
+        wrapped_command = [
+            f"{vc_varsall_command} > nul 2>&1",
+            command,
+        ]
+    wrapped_command = ' & '.join(wrapped_command)
+    wrapped_command = f'cmd /C "{wrapped_command}"' # Should probably escape quotes...
+    return wrapped_command
 
 def open_url(url):
     if is_windows():

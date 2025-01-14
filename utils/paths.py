@@ -16,12 +16,14 @@ class PredefinedPath:
     def get(self):
         if self._path is None:
             self._path = self._resolve()
-            if self._path is None:
-                raise ValueError("Path is still None after resolving")
 
             if self._required:
-                if (self._is_directory and not self._path.is_dir()) or (not self._is_directory and not self._path.is_file()):
-                    raise FileNotFoundError(f"Predefined path is invalid. {self._path}")
+                if self._path is None:
+                    raise ValueError("Predefined path is missing.")
+                if self._is_directory and not self._path.is_dir():
+                    raise FileNotFoundError(f"Predefined file path is invalid. {self._path}")
+                if not self._is_directory and not self._path.is_file():
+                    raise FileNotFoundError(f"Predefined directory path is invalid. {self._path}")
 
         return self._path
 
@@ -49,7 +51,10 @@ class EnvPath(PredefinedPath):
         try:
             return Path(os.environ[self._env_name])
         except KeyError:
-            raise KeyError(f'Cannot find path. Please define it in {self._env_name} environment variable.')
+            if self._required:
+                raise KeyError(f'Cannot find path. Please define it in {self._env_name} environment variable.')
+            else:
+                return None
 
 class RaiiChdir:
     def __init__(self, new_cwd):

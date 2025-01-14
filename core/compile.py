@@ -1,6 +1,6 @@
 from utils.build_config import Compiler, Bitness
-from utils.run_command import run_command, CommandError, CommandTimeout
-from utils import windows_only, RaiiChdir
+from utils.run_command import run_command, wrap_command_with_vcvarsall, CommandError, CommandTimeout
+from utils import windows_only, RaiiChdir, EnvPath
 import xml.etree.ElementTree as XmlElementTree
 import multiprocessing
 from contextlib import ExitStack
@@ -73,6 +73,32 @@ def compile_with_make(target="",
 
         command = f"make {target} {parallelism_arg}"
         run_command(command, env=env, paths=additional_paths)
+
+@windows_only
+def compile_with_nmake(target="",
+                            directory=None,
+                            vc_varsall_path=None,
+                            additional_paths=[],
+                            additional_env={},
+                            verbose=False):
+    # jom is an nmake clone that can build in parallel.
+    # Fall back to nmake if it's not available.
+    jom_path = EnvPath("JOM_PATH", required=False, is_directory=False)
+    nmake_path = jom_path.get()
+    if not nmake_path:
+        nmake_path = "nmake"
+
+    command = f"{nmake_path} {target}"
+    if vc_varsall_path is not None:
+        command = wrap_command_with_vcvarsall(vc_varsall_path, command, verbose)
+
+    with ExitStack() as with_stack:
+        # TODO move this to run_command
+        # This is equivalent to "with RaiiChdir(...)"", but we can do it conditionally
+        if directory is not None:
+            with_stack.enter_context(RaiiChdir(directory))
+
+        run_command(command, env=additional_env, paths=additional_paths)
 
 @windows_only
 def extract_target_names_from_msbuild_metaproj(msbuild_path, config, solution_path, env={}, cleanup_root_dir=None):
