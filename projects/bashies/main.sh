@@ -1,10 +1,9 @@
 #!/bin/sh
 
-. $DUSH_PATH/utils/bash_utils.bash
-bashies_project_subdir="bashies"
+. $DUSH_PATH/framework/frontend.bash
 
 bashies_reload() {
-	load_bash_scripts "$bashies_project_subdir"
-	load_python_scripts_as_bash_functions "$bashies_project_subdir"
+	dush_load_bash_scripts bashies
+	dush_load_python_scripts_as_bash_functions bashies
 }
-bashies_reload
+dush_init_project bashies "" bashies_reload
