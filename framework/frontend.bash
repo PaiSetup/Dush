@@ -149,11 +149,19 @@ _dush_project_dir_cd() {
 
 
 # --------------------------------------------------------------------- Utils for reload scripts
-dush_create_bash_completion_script() {
+dush_generate_bash_completion() {
 	declare -n config="dush_project_$1"
-	main_func=${config["main_func"]}
+	local main_func=${config["main_func"]}
+	local project_path=${config["path"]}
 
-	args="$($main_func list -- -q | tr -d '\n' | tr -d '\r')"
+	local cache_file="$project_path/commands.cache"
+	if [ -f "$cache_file" ]; then
+		read -r args < "$cache_file"
+	else
+		args="$($main_func list -- -q | tr -d '\n' | tr -d '\r')"
+		printf "$args\n" > "$cache_file"
+	fi
+
 	complete -W "$args" "$project_name"
 }
 
