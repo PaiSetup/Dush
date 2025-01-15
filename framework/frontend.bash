@@ -136,7 +136,14 @@ _dush_project_dir_cd() {
 	local project_name=${config["name"]}
 	local project_dir_inside_root=${config["dir_inside_root"]}
 
-	cd "$DUSH_WORKSPACE/$project_name$index/$project_dir_inside_root" || return 1
+	cd "$DUSH_WORKSPACE/$project_name$index/$project_dir_inside_root" 2>/dev/null && return 0
+
+	if [ "$index" = 1 ]; then
+		cd "$DUSH_WORKSPACE/$project_name/$project_dir_inside_root" 2>/dev/null && return 0
+	fi
+
+	echo "Could not cd"
+	return 1
 }
 
 
