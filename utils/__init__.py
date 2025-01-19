@@ -1,6 +1,18 @@
+from utils.arg import OptionEnable, interpret_arg
+from utils.build_config import Bitness, BuildConfig, BuildType, Compiler
+from utils.os_function import is_linux, is_windows, linux_only, windows_only
 from utils.paths import EnvPath, HardcodedPath, RaiiChdir
-from utils.build_config import BuildConfig, Compiler, Bitness, BuildType
-from utils.os_function import windows_only, linux_only, is_windows, is_linux
-from utils.run_command import run_command, wrap_command_with_vcvarsall, open_url, CommandError, CommandTimeout
-from utils.project_dir import workspace_path, ProjectRepository, project_repositories, get_project_dir, get_project_dirs
-from utils.arg import interpret_arg, OptionEnable
+from utils.project_dir import (
+    DushProject,
+    get_project_dir,
+    get_project_dirs,
+    project_repositories,
+    workspace_path,
+)
+from utils.run_command import (
+    CommandError,
+    CommandTimeout,
+    open_url,
+    run_command,
+    wrap_command_with_vcvarsall,
+)

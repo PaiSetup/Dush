@@ -1,4 +1,5 @@
 import tempfile
+from pathlib import Path
 
 import core
 from framework import *
@@ -6,13 +7,7 @@ from utils import *
 
 # ----------------------------------------------------------- Helpers for commands
 is_main = __name__ == "__main__"
-repo = ProjectRepository(
-    root_name_prefix="yuview",
-    url="https://github.com/IENT/YUView",
-    dir_suffix=".",
-    dev_branch="main",
-)
-project_repositories.add(repo.root_name_prefix, repo, is_main)
+project_repositories.load(Path(__file__).parent)
 
 qt_path = EnvPath("QT_PATH", is_directory=True, required=False)
 vc_varsall_path = EnvPath("VC_VARSALL_PATH", is_directory=False, required=False)

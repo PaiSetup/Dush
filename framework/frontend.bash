@@ -49,7 +49,8 @@ dush_init_project() {
 	config["main_func"]="$main_func"
 
 	# Define known keys. All project's config.ini should define those keys and only those keys.
-	local known_keys=(name name_friendly dir_inside_root has_repository has_main_command has_bash_scripts has_python_scripts)
+	local known_keys=(name name_friendly dir_inside_root has_repository has_main_command has_bash_scripts has_python_scripts
+	                  upstream_url upstream_main_branch upstream_dev_branch)
 
 	# Read config from .ini file, that is shared with Python.
 	while read -r line; do
