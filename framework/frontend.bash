@@ -32,9 +32,8 @@ fi
 # --------------------------------------------------------------------- project initialization
 dush_init_project() {
 	local project_name="$1"
-	local main_function_name="$2"
-	local reload_function_name="$3"
 	local project_path="$(dirname "${BASH_SOURCE[1]}")" # this is a bit sketchy...
+	local main_func="$project_name"
 
 	# All metadata for the project will be stored in a global associative array. Some fields
 	# will be manually assigned in this function and some will be read from an .ini file. This
@@ -44,71 +43,155 @@ dush_init_project() {
 	declare -Ag "dush_project_$project_name"
 	declare -n config="dush_project_$project_name"
 
-	# Main function is generated automatically. It is optional and can be skipped by specifying
-	# an empty main function name. This would typically done for a project, that's just a set of
-	# Bash/Python scripts with no single main file.
-	if [ -n "$main_function_name" ]; then
-		local function_definition="$main_function_name() { dush_project_main $1 \""\$@"\" ; }"
-		eval "$function_definition"
-	fi
-
-	# Read config from .ini file, that is shared with Python.
-	while read -r line; do
-		key="${line%% =*}"
-		value="${line##*= }"
-		config["$key"]="$value"
-	done < "$project_path/config.ini"
-
 	# Initialize some Bash-specific variables that will be used by Dush framework.
 	config["path"]="$project_path"
 	config["is_loaded"]="0"
-	config["main_func"]="$main_function_name"
-	config["reload_func"]="$reload_function_name"
+	config["main_func"]="$main_func"
+
+	# Define known keys. All project's config.ini should define those keys and only those keys.
+	local known_keys=(name name_friendly dir_inside_root has_repository has_main_command has_bash_scripts has_python_scripts)
+
+	# Read config from .ini file, that is shared with Python.
+	while read -r line; do
+		# Extract key/value pair. This method is not very robust, because it hardcodes the line format and requires
+		# exactly one space before and after equals sign. It also gives weird results for empty values. Although,
+		# it's quick and concise and I don't really care about robustness here.
+		local key="${line%% =*}"
+		local value="${line##*= }"
+
+		# Check if the key is known
+		local is_known=0
+		for known_key in "${known_keys[@]}"; do
+			if [ "$key" = "$known_key" ]; then
+				is_known=1
+				break
+			fi
+		done
+
+		# Save the value to project config.
+		if [ "$is_known" = "1" ]; then
+			config["$key"]="$value"
+		else
+			echo "WARNING: Dush project $project_name defines unexpected setting \"$key\" in its config.ini"
+		fi
+	done < "$project_path/config.ini"
 
 	# Call reload on init if requested.
 	if [ "$DUSH_ENABLE_AUTOLOAD" = "1" ]; then
-		_dush_call_lazy_reload
+		_dush_project_reload 1
 	fi
+
+	# Validate all required keys are present
+	local success=1
+	for key in "${known_keys[@]}"; do
+		if ! [ "${config[$key]+abc}" ]; then
+			echo "ERROR: Dush project $project_name does not define config key $key"
+			success=0
+		fi
+	done
+	if [ "$success" = 0 ]; then
+		return 1
+	fi
+
+	# Generate project main, which will serve as a frontend for all interactions with this project.
+	local project_main_definition="$main_func() { _dush_project_main $1 \""\$@"\" ; }"
+	eval "$project_main_definition"
 }
 
 
-# --------------------------------------------------------------------- project main and its subroutines
-dush_project_main() {
-	declare -n config="dush_project_$1"
+
+# --------------------------------------------------------------------- project main
+_dush_project_main() {
+	# Parse arguments. Project name will be passed automatically by code generated in dush_init_project(). The
+	# rest of the arguments will come from the user. We'll shift args by one to omit the project name, so that
+	# the "$@" expression doesn't contain it.
+	local project_name="$1"
 	local arg="$2"
-	shift # Shift args, so that "$@" contains only user specified arguments
+	shift
 
-	# Ensure reload is done
-	_dush_call_lazy_reload
+	# Declare a name reference named "config" for associative array with a variable name. This definition will be
+	# visible by all subroutines called by the project main, so they will be access all project metadata.
+	declare -n config="dush_project_$project_name"
 
-	# If project_dir_inside_root is empty, it means it's a project without an established repository, but
-	# rather a set of related scripts. Always call into python script.
-	local project_dir_inside_root=${config["dir_inside_root"]}
-	if [ -z "$project_dir_inside_root" ]; then
-		_dush_project_python_script "$@"
-		return
+	# The _dush_project_main function serves as a frontend for all operations doable on the project, so it has multiple
+	# possible use cases. Some of these cases could be disabled, e.g. if has_repository=0, it means the project isn't
+	# associated with a code repository. That means listing code repositories doesn't make any sense, so we don't even
+	# try doing it and we can fallback to something else for convenience.
+	#
+	# Stage 1: try to dispatch based on first argument and project config. The cryptic glob *[!0-9]*) matches nearly
+	# everything, except for only-digits strings. So the last *) glob will match only numbers.
+	local has_main_command=${config["has_main_command"]}
+	local has_repository=${config["has_repository"]}
+	local dispatched=0
+	case "$arg" in
+		'')
+			if [ "$has_repository" = "1" ]; then
+				_dush_project_dir_list
+				dispatched=1
+			fi
+			;;
+		"reload")
+			_dush_project_reload
+			dispatched=1
+			;;
+		*[!0-9]*)
+			dispatched=0 # fallback
+			;;
+		*)
+			if [ "$has_repository" = "1" ]; then
+				_dush_project_dir_cd "$arg"
+				dispatched=1
+			fi
+			;;
+	esac
+
+	# Stage 2: if we haven't dispatched in stage 1, try to call main command or reload command.
+	if [ "$dispatched" = "0" ]; then
+		if [ "$has_main_command" = "1" ]; then
+			_dush_project_python_script "$@"
+		else
+			_dush_project_reload
+		fi
 	fi
 
-	# Do different things depending on args passed
-	case "$arg" in
-		'')       _dush_project_dir_list ;;
-		*[!0-9]*) _dush_project_python_script "$@" ;;
-		*)        _dush_project_dir_cd "$arg" ;;
-	esac
+	# Stage 3: Ensure reload has been done at least once.
+	if [ "${config["is_loaded"]}" = 0 ]; then
+		_dush_project_reload
+	fi
 }
 
+
+
+# --------------------------------------------------------------------- Calling Python scripts
+_dush_call_python_script() {
+	local script_name="$1"
+	shift
+	PYTHONPATH=$DUSH_PATH $DUSH_PYTHON_COMMAND "$script_name" "$@"
+}
+
+_dush_project_python_script() {
+	local project_path=${config["path"]}
+	local project_name=${config["name"]}
+
+	local script_name="$project_path/$project_name.py"
+	_dush_call_python_script "$script_name" "$@"
+}
+
+
+
+# --------------------------------------------------------------------- Managing project's code repositories
 _dush_project_dir_list() {
 	local project_name=${config["name"]}
 	local project_name_friendly=${config["name_friendly"]}
 	local project_dir_inside_root=${config["dir_inside_root"]}
 
 	get_branchname() {
-        workspace="$1"
+        local workspace="$1"
         cd "$workspace" 2>/dev/null || {
 			echo "(<ERROR>)"
 			return
 		}
-		branch="$(git branch --show-current)"
+		local branch="$(git branch --show-current)"
 		if [ -n "$branch" ]; then
 			echo "($branch)"
 		else
@@ -121,14 +204,6 @@ _dush_project_dir_list() {
 		branch="$(get_branchname "$workspace/$project_dir_inside_root")"
 		echo "    $workspace     $branch"
 	done
-}
-
-_dush_project_python_script() {
-	local project_path=${config["path"]}
-	local project_name=${config["name"]}
-
-	local script_name="$project_path/$project_name.py"
-	_dush_call_python_script "$script_name" "$@"
 }
 
 _dush_project_dir_cd() {
@@ -148,13 +223,38 @@ _dush_project_dir_cd() {
 
 
 
-# --------------------------------------------------------------------- Utils for reload scripts
-dush_generate_bash_completion() {
-	declare -n config="dush_project_$1"
+# --------------------------------------------------------------------- Reloading
+_dush_project_reload() {
+	local silent="$1"
+	if [ "$silent" != "1" ]; then
+		echo "Reloading project ${config[name]}"
+	fi
+
+	config["is_loaded"]="1"
+
+	local has_main_command=${config["has_main_command"]}
+	local has_python_scripts=${config["has_python_scripts"]}
+	local has_bash_scripts=${config["has_bash_scripts"]}
+
+	if [ "$has_main_command" = 1 ]; then
+		_dush_generate_main_function_completion
+	fi
+
+	if [ "$has_python_scripts" = 1 ]; then
+		_dush_load_python_scripts_as_bash_functions
+	fi
+
+	if [ "$has_bash_scripts" = 1 ]; then
+		_dush_load_bash_scripts
+	fi
+}
+
+_dush_generate_main_function_completion() {
 	local main_func=${config["main_func"]}
 	local project_path=${config["path"]}
 
 	local cache_file="$project_path/commands.cache"
+	local args=
 	if [ -f "$cache_file" ]; then
 		read -r args < "$cache_file"
 	else
@@ -165,60 +265,27 @@ dush_generate_bash_completion() {
 	complete -W "$args" "$project_name"
 }
 
-_dush_load_python_script_as_bash_function() {
-	local script_file="$1"
-
-	local script_name="${script_file%.*}"
-	local script_name="$(basename "$script_name")"
-	local function_definition="$script_name() { _dush_call_python_script \"$script_file\" \"\$@\" ; }"
-	eval "$function_definition"
-}
-
-dush_load_python_scripts_as_bash_functions() {
-	declare -n config="dush_project_$1"
+_dush_load_python_scripts_as_bash_functions() {
 	local project_path=${config["path"]}
+	local main_func=${config["main_func"]}
 
 	while read -r script_file; do
-		_dush_load_python_script_as_bash_function "$script_file"
+		local script_name="${script_file%.*}"
+		local script_name="$(basename "$script_name")"
+		if [ "$script_name" != "$main_func" ]; then
+			local function_definition="$script_name() { _dush_call_python_script \"$script_file\" \"\$@\" ; }"
+			eval "$function_definition"
+		fi
 	done <<< "$(find $project_path -name "*.py")"
 }
 
-dush_load_bash_scripts() {
-	declare -n config="dush_project_$1"
+_dush_load_bash_scripts() {
 	local project_path=${config["path"]}
 
-	export IS_LINUX="$(uname -a | grep -cv "Linux")"
+	local IS_LINUX="$(uname -a | grep -cv "Linux")"
 	local forbidden_dir="$([ "$IS_LINUX" = 0 ] && echo windows || echo linux)"
 
 	for file in $(find "$project_path" -name "*.sh" -not -path "*/$forbidden_dir/*" -not -path "*/runnable/*" -not -path "*/main.sh" | sort); do
 		. "$file"
 	done
-}
-
-
-
-# --------------------------------------------------------------------- Other utils
-_dush_call_python_script() {
-	local script_name="$1"
-	shift
-	PYTHONPATH=$DUSH_PATH $DUSH_PYTHON_COMMAND "$script_name" "$@"
-}
-
-_dush_call_lazy_reload() {
-	# Each project can have a reload function. In this function it usually loads shell completion
-	# for the project. This takes relatively a lot of time when there are multiple project, since
-	# it has to call python main script.
-	#
-	# To optimize this, we call reload function lazily upon first call to project_main. The code
-	# looks a bit complicated, because we basically have to pass a reference to the varable info
-	# whether reload was already called or not. In bash it is done by passing the name of the
-	# variable and initializing it with some "local -n" magic. We also pass a callback to the
-	# project-specific reload function as a string. This can be simply called as usual.
-
-	if [ "${config["is_loaded"]}" = 0 ]; then
-		config["is_loaded"]="1"
-
-		reload_func=${config["reload_func"]}
-		$reload_func
-	fi
 }
