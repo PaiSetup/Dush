@@ -1,9 +1,19 @@
 import enum
 
-def interpret_arg(arg, arg_type, name, *args, **kwargs):
-    if type(arg) == arg_type:
+def interpret_arg(arg, arg_type, name, **kwargs):
+    if arg_type == str:
+        try:
+            allow_empty = kwargs["allow_empty"]
+        except KeyError:
+            allow_empty = True
+
+        arg = str(arg)
+        if not allow_empty and len(arg.strip()) == 0:
+            raise ValueError(f"Argument {name} must not be empty")
         return arg
-    if arg_type == bool:
+    elif type(arg) == arg_type:
+        return arg
+    elif arg_type == bool:
         if arg == "1" or arg == 1 or arg == True:
             return True
         elif arg == "0" or arg == 0 or arg == False:
@@ -16,7 +26,7 @@ def interpret_arg(arg, arg_type, name, *args, **kwargs):
         except ValueError:
             raise ValueError(f"Argument {name} must be an integer")
     elif hasattr(arg_type, "interpret_arg"):
-        return arg_type.interpret_arg(arg, name, *args, **kwargs)
+        return arg_type.interpret_arg(arg, name, **kwargs)
     else:
         raise TypeError("Unknown type for interpret_arg")
 
