@@ -18,6 +18,9 @@ if ! [ -d "$DUSH_WORKSPACE" ]; then
 fi
 export DUSH_WORKSPACE="$DUSH_WORKSPACE"
 
+# Validate Dush path
+export DUSH_PATH="$DUSH_PATH"
+
 # Validate autoload
 if [ -z "$DUSH_ENABLE_AUTOLOAD" ]; then
 	DUSH_ENABLE_AUTOLOAD=0
@@ -59,6 +62,7 @@ dush_init_project() {
 		# it's quick and concise and I don't really care about robustness here.
 		local key="${line%% =*}"
 		local value="${line##*= }"
+		value="${value%"${value##*[![:space:]]}"}" # Remove trailing whitespace
 
 		# Check if the key is known
 		local is_known=0
@@ -251,7 +255,6 @@ _dush_project_reload() {
 }
 
 _dush_generate_main_function_completion() {
-	local main_func=${config["main_func"]}
 	local project_path=${config["path"]}
 
 	local cache_file="$project_path/commands.cache"
@@ -259,7 +262,7 @@ _dush_generate_main_function_completion() {
 	if [ -f "$cache_file" ]; then
 		read -r args < "$cache_file"
 	else
-		args="$($main_func list -- -q | tr -d '\n' | tr -d '\r')"
+		args="$(_dush_project_python_script list -- -q | tr -d '\n' | tr -d '\r')"
 		printf "$args\n" > "$cache_file"
 	fi
 
@@ -289,4 +292,14 @@ _dush_load_bash_scripts() {
 	for file in $(find "$project_path" -name "*.sh" -not -path "*/$forbidden_dir/*" -not -path "*/runnable/*" -not -path "*/main.sh" | sort); do
 		. "$file"
 	done
+}
+
+# --------------------------------------------------------------------- Reloading
+dush_clear_caches() {
+	local dush_path="$DUSH_PATH"
+	local IS_WINDOWS="$(uname -a | grep -c "MINGW")"
+	if [ "$IS_WINDOWS" = 1 ]; then
+		dush_path="$(echo "$dush_path" | sed -E "s/\\\\/\//g" | sed -E "s/(C):\//\/\l\1\//g")"
+	fi
+	find "$dush_path" -name "commands.cache" | xargs rm
 }
