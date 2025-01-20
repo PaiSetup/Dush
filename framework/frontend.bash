@@ -294,7 +294,7 @@ _dush_load_bash_scripts() {
 	done
 }
 
-# --------------------------------------------------------------------- Reloading
+# --------------------------------------------------------------------- Other utilities
 dush_clear_caches() {
 	local dush_path="$DUSH_PATH"
 	local IS_WINDOWS="$(uname -a | grep -c "MINGW")"
