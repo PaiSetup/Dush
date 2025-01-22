@@ -222,7 +222,7 @@ _dush_project_dir_cd() {
 		cd "$DUSH_WORKSPACE/$project_name/$project_dir_inside_root" 2>/dev/null && return 0
 	fi
 
-	echo "Could not cd"
+	echo "Could not cd to $project_name directory."
 	return 1
 }
 
