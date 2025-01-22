@@ -266,7 +266,7 @@ _dush_generate_main_function_completion() {
 		printf "$args\n" > "$cache_file"
 	fi
 
-	complete -W "$args" "$project_name"
+	complete -W "$args reload" "$project_name"
 }
 
 _dush_load_python_scripts_as_bash_functions() {
