@@ -1,4 +1,5 @@
 import enum
+from pathlib import Path
 
 def interpret_arg(arg, arg_type, name, **kwargs):
     if arg_type == str:
@@ -25,6 +26,18 @@ def interpret_arg(arg, arg_type, name, **kwargs):
             return int(arg)
         except ValueError:
             raise ValueError(f"Argument {name} must be an integer")
+    elif arg_type == Path:
+        if arg is None or arg == "":
+            if kwargs.get("allow_empty", True):
+                return None
+            else:
+                raise ValueError(f"Argument {name} must not be empty")
+        result = Path(arg)
+        if kwargs.get("require_file", False) and not result.is_file():
+            raise ValueError(f"Argument {name} must be an existing file.")
+        if kwargs.get("require_directory", False) and not result.is_dir():
+            raise ValueError(f"Argument {name} must be an existing directory.")
+        return result
     elif hasattr(arg_type, "interpret_arg"):
         return arg_type.interpret_arg(arg, name, **kwargs)
     else:
