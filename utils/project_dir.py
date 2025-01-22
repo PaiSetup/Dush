@@ -151,7 +151,7 @@ def get_project_dirs(root_name_prefix=None, suffix=None):
     if suffix is None:
         suffix = project_repositories.get_main().dir_inside_root
     if root_name_prefix is None:
-        root_name_prefix = project_repositories.get_main().root_name_prefix
+        root_name_prefix = project_repositories.get_main().name
 
     # Get overridden arguments for cmdline
     if framework.get_framework_args().project_dir_force is not None:
