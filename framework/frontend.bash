@@ -99,7 +99,7 @@ dush_init_project() {
 	fi
 
 	# Generate project main, which will serve as a frontend for all interactions with this project.
-	local project_main_definition="$main_func() { _dush_project_main $1 \""\$@"\" ; }"
+	local project_main_definition="$main_func() { _dush_project_main $1 \"\$@\" ; return \$? ; }"
 	eval "$project_main_definition"
 }
 
@@ -151,9 +151,11 @@ _dush_project_main() {
 	esac
 
 	# Stage 2: if we haven't dispatched in stage 1, try to call main command or reload command.
+	exit_value=0
 	if [ "$dispatched" = "0" ]; then
 		if [ "$has_main_command" = "1" ]; then
 			_dush_project_python_script "$@"
+			exit_value=$?
 		else
 			_dush_project_reload
 		fi
@@ -163,6 +165,8 @@ _dush_project_main() {
 	if [ "${config["is_loaded"]}" = 0 ]; then
 		_dush_project_reload
 	fi
+
+	return $exit_value
 }
 
 
@@ -172,6 +176,7 @@ _dush_call_python_script() {
 	local script_name="$1"
 	shift
 	PYTHONPATH=$DUSH_PATH $DUSH_PYTHON_COMMAND "$script_name" "$@"
+	return $?
 }
 
 _dush_project_python_script() {
@@ -180,6 +185,7 @@ _dush_project_python_script() {
 
 	local script_name="$project_path/$project_name.py"
 	_dush_call_python_script "$script_name" "$@"
+	return $?
 }
 
 
@@ -277,7 +283,7 @@ _dush_load_python_scripts_as_bash_functions() {
 		local script_name="${script_file%.*}"
 		local script_name="$(basename "$script_name")"
 		if [ "$script_name" != "$main_func" ]; then
-			local function_definition="$script_name() { _dush_call_python_script \"$script_file\" \"\$@\" ; }"
+			local function_definition="$script_name() { _dush_call_python_script \"$script_file\" \"\$@\" ; return \$? ; }"
 			eval "$function_definition"
 		fi
 	done <<< "$(find $project_path -name "*.py")"
