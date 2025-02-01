@@ -1,11 +1,20 @@
 #!/bin/bash
 
+# Check OS
+export DUSH_IS_WINDOWS=0
+export DUSH_IS_LINUX=0
+if uname -a | grep -q MINGW; then
+	export DUSH_IS_WINDOWS=1
+elif uname -a | grep -q Linux; then
+	export DUSH_IS_LINUX=1
+fi
+
 # Prepare Python command. Gitbash on Windows requires a special invocation, otherwise it
 # hangs for some reason.
 if [ -z "$DUSH_PYTHON_COMMAND" ]; then
 	DUSH_PYTHON_COMMAND="python"
 fi
-if uname | grep -q MINGW; then
+if [ $DUSH_IS_WINDOWS = 1 ]; then
 	DUSH_PYTHON_COMMAND="winpty -Xallow-non-tty -Xplain $DUSH_PYTHON_COMMAND"
 fi
 
@@ -292,8 +301,7 @@ _dush_load_python_scripts_as_bash_functions() {
 _dush_load_bash_scripts() {
 	local project_path=${config["path"]}
 
-	local IS_LINUX="$(uname -a | grep -cv "Linux")"
-	local forbidden_dir="$([ "$IS_LINUX" = 0 ] && echo windows || echo linux)"
+	local forbidden_dir="$([ "$DUSH_IS_LINUX" = 1 ] && echo windows || echo linux)"
 
 	for file in $(find "$project_path" -name "*.sh" -not -path "*/$forbidden_dir/*" -not -path "*/runnable/*" -not -path "*/main.sh" | sort); do
 		. "$file"
@@ -303,8 +311,7 @@ _dush_load_bash_scripts() {
 # --------------------------------------------------------------------- Other utilities
 dush_clear_caches() {
 	local dush_path="$DUSH_PATH"
-	local IS_WINDOWS="$(uname -a | grep -c "MINGW")"
-	if [ "$IS_WINDOWS" = 1 ]; then
+	if [ "$DUSH_IS_WINDOWS" = 1 ]; then
 		dush_path="$(echo "$dush_path" | sed -E "s/\\\\/\//g" | sed -E "s/(C):\//\/\l\1\//g")"
 	fi
 	find "$dush_path" -name "commands.cache" | xargs rm

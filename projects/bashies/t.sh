@@ -6,7 +6,7 @@ t() (
         cd build || return
     fi
 
-    if [ "$IS_LINUX" = 0 ]; then
+    if [ "$DUSH_IS_LINUX" = 1 ]; then
         extraArgs="-- -j$(nproc)"
     fi
 
