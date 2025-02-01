@@ -1,5 +1,7 @@
-from utils.os_function import is_windows
 from enum import Enum
+
+from utils.os_function import is_windows
+
 
 class Compiler(Enum):
     VisualStudio = 1
@@ -11,6 +13,7 @@ class Compiler(Enum):
             Compiler.Ninja: "ninja",
         }[self]
 
+
 class Bitness(Enum):
     x32 = 1
     x64 = 2
@@ -20,6 +23,7 @@ class Bitness(Enum):
             Bitness.x32: "32",
             Bitness.x64: "64",
         }[self]
+
 
 class BuildType(Enum):
     Debug = 1
@@ -33,8 +37,12 @@ class BuildType(Enum):
             BuildType.RelWithDebInfo: "RelWithDebInfo",
         }[self]
 
+
 class BuildConfig:
     def __init__(self, compiler=None, bitness=None, build_type=None) -> None:
+        if not hasattr(BuildConfig, "allowed_compilers"):
+            raise KeyError("Call BuildConfig.configure() before creating instances of BuildConfig")
+
         self.compiler = compiler if compiler else BuildConfig.default_compiler
         self.bitness = bitness if bitness else BuildConfig.default_bitness
         self.build_type = build_type if build_type else BuildConfig.default_build_type
@@ -44,9 +52,7 @@ class BuildConfig:
 
     @classmethod
     def configure(cls, allowed_compilers, allowed_bitnesses, allowed_build_types, default_compiler, default_bitness, default_build_type):
-        if (default_compiler not in allowed_compilers or
-           default_bitness not in allowed_bitnesses or
-           default_build_type not in allowed_build_types):
+        if default_compiler not in allowed_compilers or default_bitness not in allowed_bitnesses or default_build_type not in allowed_build_types:
             raise ValueError("Incorrect BuildConfig configuration")
 
         cls.allowed_compilers = allowed_compilers
@@ -122,14 +128,3 @@ class BuildConfig:
     @staticmethod
     def interpret_array(*args, allow_empty=True):
         return [BuildConfig.interpret_arg(arg, "config", allow_empty=allow_empty) for arg in args]
-
-# By default allow all configurations
-# TODO remove this and require explicit configure
-BuildConfig.configure(
-    list(Compiler),
-    list(Bitness),
-    list(BuildType),
-    Compiler.VisualStudio,
-    Bitness.x64,
-    BuildType.Debug,
-)
