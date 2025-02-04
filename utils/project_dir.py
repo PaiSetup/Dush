@@ -20,9 +20,6 @@ class DushProjectRepository:
         self._projects = dict()
 
     def load_all(self):
-        import glob
-
-        pattern = f"{dush_path.get()}/projects/**/config.ini"
         for config_file in dush_path.get().glob("projects/**/config.ini"):
             project_dir = Path(config_file).parent
             self.load(project_dir)
