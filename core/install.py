@@ -22,7 +22,7 @@ def _is_scp(dst_dir):
         case _:
             return True # Multiple letter before colon, probably host name for scp
 
-def install(src_dir, dst_dir, filenames, tmp_dir):
+def install(src_dir, dst_dir, filenames, tmp_dir, *, follow_symlinks=True):
     if _is_scp(dst_dir):
         files = [ f"'{str(Path(src_dir) / f)}'" for f in filenames]
         files = ' '.join(files)
@@ -42,7 +42,9 @@ def install(src_dir, dst_dir, filenames, tmp_dir):
 
             try:
                 print(f"Installing {src} -> {dst}")
-                shutil.copyfile(src, dst)
+                if not follow_symlinks:
+                    dst.unlink(missing_ok=True) # symlinks cannot be overwritten for some reason
+                shutil.copy2(src, dst, follow_symlinks=follow_symlinks)
             except PermissionError:
                 if tmp_dir is None:
                     raise
