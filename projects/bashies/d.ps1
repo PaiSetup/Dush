@@ -1,0 +1,1 @@
+cd $env:DUSH_WORKSPACE

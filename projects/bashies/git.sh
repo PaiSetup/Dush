@@ -6,12 +6,8 @@ log() (
     git log --graph --pretty="format:%C(auto,yellow)%H %C(auto,green)%<(20,trunc)%aN %C(auto,cyan)%<(15,trunc)%cr %C(auto,reset)%s %C(auto)%d" "$@"
 )
 
-logg() (
-    git log --pretty="format:%C(auto,yellow)%H %C(auto,green)%<(20,trunc)%aN %C(auto,cyan)%<(15,trunc)%cr %C(auto,reset)%s %C(auto)%d" "$@"
-)
-
 logd() (
-    a="%Y ::: %m ::: %d ::: %H ::: %M ::: "
+    a="%Y-%m-%d    %H:%M:%S"
     git log --graph --pretty="format:%C(auto,yellow)%H %C(auto,green)%<(20,trunc)%aN %C(auto,cyan)%<(45,trunc)%cd %C(auto,reset)%s %C(auto)%d" --date=format:"$a" "$@"
 )
 
