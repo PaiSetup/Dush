@@ -262,7 +262,7 @@ function _dush_load_powershell_scripts_as_powershell_functions() {
 	$project_path = $config["path"]
 	$main_func = $config["main_func"]
 
-    $scripts = Get-ChildItem $project_path | Where-Object { $_.Extension -eq ".ps1" }
+    $scripts = Get-ChildItem -path $project_path -recurse | Where-Object { $_.Extension -eq ".ps1" }
     foreach ($script_file in $scripts) {
         $script_name = $script_file.Basename
         $script_path = $script_file.FullName
