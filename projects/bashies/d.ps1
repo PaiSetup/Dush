@@ -1,1 +1,1 @@
-cd $env:DUSH_WORKSPACE
+Set-Location $env:DUSH_WORKSPACE

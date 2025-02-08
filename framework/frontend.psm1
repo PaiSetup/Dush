@@ -4,6 +4,7 @@ function dush_init_project() {
         [string] $project_name
     )
 
+
     $calling_script = Get-PSCallStack | Select-Object -Skip 1 -First 1 -ExpandProperty ScriptName
     $project_path = (Get-Item $calling_script ).Directory.FullName
     $main_func = $project_name
@@ -219,11 +220,12 @@ function _dush_project_reload() {
     }
 
 	if ($has_python_scripts) {
-		_dush_load_python_scripts_as_bash_functions $config
+		_dush_load_python_scripts_as_powershell_functions $config
     }
 
+    # TODO add has_powershell_scripts and update all projects
 	if ($has_bash_scripts) {
-		_dush_load_bash_scripts $config
+		_dush_load_powershell_scripts_as_powershell_functions $config
     }
 }
 
@@ -235,7 +237,7 @@ function _dush_generate_main_function_completion() {
     # https://stackoverflow.com/questions/33497205/custom-powershell-tab-completion-for-a-specific-command
 }
 
-function _dush_load_python_scripts_as_bash_functions() {
+function _dush_load_python_scripts_as_powershell_functions() {
     param($config)
 
 	$project_path = $config["path"]
@@ -254,9 +256,23 @@ function _dush_load_python_scripts_as_bash_functions() {
     }
 }
 
-function _dush_load_bash_scripts() {
-    # TODO cannot do this, because the scripts expect bash environment and define a function. They will have to be
-    # changed to be executable normally. Bash frontend will have to be adjusted as well.
+function _dush_load_powershell_scripts_as_powershell_functions() {
+    param($config)
+
+	$project_path = $config["path"]
+	$main_func = $config["main_func"]
+
+    $scripts = Get-ChildItem $project_path | Where-Object { $_.Extension -eq ".ps1" }
+    foreach ($script_file in $scripts) {
+        $script_name = $script_file.Basename
+        $script_path = $script_file.FullName
+        if ($script_name -eq $main_func -or $script_name -eq "main") {
+            continue
+        }
+
+        $function_definition = "function global:$script_name() { $script_path `$args }"
+        Invoke-Expression $function_definition
+    }
 }
 
 
