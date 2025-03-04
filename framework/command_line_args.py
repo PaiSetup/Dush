@@ -85,6 +85,9 @@ class CommandLineArgs:
                 key = input_arg[2:equal_sign_index]
                 value = input_arg[equal_sign_index+1:]
                 kwargs[key] = value
+            elif input_arg.startswith("\\--"):
+                # This is a normal arg that start with "--" and has escape backslash, so it's not treated as keyword
+                args.append(input_arg[1:])
             else:
                 # This is a normal arg
                 args.append(input_arg)
