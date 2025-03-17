@@ -4,5 +4,5 @@ from core.compile import compile_with_cmake, compile_with_msbuild, compile_with_
 from core.git import reset_repo, update_submodules, fetch, checkout, rebase, gc, find_baseline_commit, get_branch, cherrypick
 from core.install import install
 from core.unlock import unlock
-from core.meson import meson
+from core.meson import meson_setup, meson_configure
 from core.qmake import qmake, qmake_deploy
