@@ -21,7 +21,7 @@ def compile_with_cmake(config, build_dir, targets, additional_env={}, additional
     except CommandError:
         raise CompilationFailedError("Compilation failed")
 
-def compile_with_ninja(build_dir, target):
+def compile_with_ninja(target, build_dir):
     command = f"ninja -C {build_dir} {target}"
     try:
         run_command(command)
