@@ -11,6 +11,15 @@ logd() (
     git log --graph --pretty="format:%C(auto,yellow)%H %C(auto,green)%<(20,trunc)%aN %C(auto,cyan)%<(45,trunc)%cd %C(auto,reset)%s %C(auto)%d" --date=format:"$a" "$@"
 )
 
+logac() (
+    divider='%C(auto,red) | '
+    hash='%C(auto,yellow)%h'
+    author='%C(auto,cyan)Author: %>(15,trunc)%aN %<(25,trunc)%ae %as'
+    committer='%C(auto,green)Committer: %>(15,trunc)%cN %<(25,trunc)%ce %cs'
+    message='%C(auto)%s %d'
+    git log --pretty="format: $hash$divider$author$divider$committer$divider$message" "$@"
+)
+
 poi() (
     echo "> log -10"
     log -10
