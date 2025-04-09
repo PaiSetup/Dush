@@ -21,6 +21,9 @@ class Framework:
     def get_framework_args(self):
         return self._command_line_args.get_framework_args()
 
+    def get_command(self, name):
+        return self._command_controller.get_command(name)
+
     def main(self):
         self._insert_framework_commands()
 
@@ -68,8 +71,6 @@ class Framework:
                 commands_names = [command for command in self._command_controller.get_commands()]
                 print(' '.join(commands_names))
             self._command_controller.register_command_multiple(list)
-
-
 
     def _print_help(self, command=None):
         # Print usage
