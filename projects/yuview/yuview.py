@@ -17,8 +17,18 @@ def get_build_dir(project_dir, config):
     return project_dir / f"build.{config.build_type}"
 
 
-def get_binary_dir(build_dir):
-    return build_dir / "YUViewApp"
+def get_app_binary_path(build_dir):
+    result = build_dir / "YUViewApp/YUView"
+    if is_windows():
+        result = result.with_suffix(".exe")
+    return result
+
+
+def get_unit_tests_binary_path(build_dir):
+    result = build_dir / "YUViewUnitTest/YUViewUnitTest"
+    if is_windows():
+        result = result.with_suffix(".exe")
+    return result
 
 
 # ----------------------------------------------------------- Commands
@@ -29,8 +39,11 @@ def qmake(config=""):
     project_dir = get_project_dir()
     build_dir = get_build_dir(project_dir, config)
     source_file = project_dir / "YUView.pro"
+    args = [
+        "'CONFIG+=UNITTESTS debug'",
+    ]
 
-    core.qmake(source_file, build_dir, config, qt_path.get(), vc_varsall_path.get())
+    core.qmake(source_file, build_dir, config, args, qt_path.get(), vc_varsall_path.get())
 
 
 @command
@@ -39,8 +52,10 @@ def compile(config=""):
 
     project_dir = get_project_dir()
     build_dir = get_build_dir(project_dir, config)
-    binary_dir = get_binary_dir(build_dir)
-    exe_path = binary_dir / "YUView.exe"
+
+    # Remove unit tests executable to ensure it's recompiled. The .pro file is missing dependency on the YUViewLib.
+    unit_test_path = get_unit_tests_binary_path(build_dir)
+    unit_test_path.unlink(missing_ok=True)
 
     if is_windows():
         core.compile_with_nmake(
@@ -50,7 +65,39 @@ def compile(config=""):
         core.qmake_deploy(qt_path, exe_path)
     else:
         core.compile_with_make(directory=build_dir)
-    print(f"Compiled application: {exe_path}")
+    print(f"Compiled application: {get_app_binary_path(build_dir)}")
+
+
+@command
+def run(config="", perform_compilation=False):
+    config = interpret_arg(config, BuildConfig, "config")
+    perform_compilation = interpret_arg(perform_compilation, bool, "perform_compilation")
+
+    project_dir = get_project_dir()
+    build_dir = get_build_dir(project_dir, config)
+
+    if perform_compilation:
+        compile(config)
+
+    command = str(get_app_binary_path(build_dir))
+    run_command(command)
+
+
+@command
+def run_unit_tests(config="", perform_compilation=False, test_pattern=""):
+    config = interpret_arg(config, BuildConfig, "config")
+    perform_compilation = interpret_arg(perform_compilation, bool, "perform_compilation")
+
+    project_dir = get_project_dir()
+    build_dir = get_build_dir(project_dir, config)
+
+    if perform_compilation:
+        compile(config)
+
+    command = str(get_unit_tests_binary_path(build_dir))
+    if test_pattern:
+        command = f"{command} --gtest_filter={test_pattern}"
+    run_command(command)
 
 
 # ----------------------------------------------------------- Main procedure

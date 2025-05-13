@@ -11,10 +11,12 @@ def get_qt_binary(binary, qt_path):
     return binary
 
 
-def qmake(source_file, build_dir, config, qt_path=None, vc_varsall_path=None):
+def qmake(source_file, build_dir, config, args=[], qt_path=None, vc_varsall_path=None):
     qmake_path = get_qt_binary("qmake", qt_path)
-    command = f"{qmake_path} {source_file}"
+    args = " ".join(args)
+    command = f"{qmake_path} {source_file} {args}"
 
+    print(command)
     if config.build_type == BuildType.Debug:
         command += " CONFIG+=debug"  # TODO is this really a QT thing or a YUView thing?
 
