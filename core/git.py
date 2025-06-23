@@ -62,3 +62,10 @@ def get_branch():
         return None
     else:
         return branch.strip()
+
+def get_commit_hash(characters=None):
+    commit_hash = run_command("git rev-parse HEAD", return_stdout=True, print_stdout=False)
+    commit_hash = commit_hash.strip()
+    if characters is not None:
+        commit_hash = commit_hash[:characters]
+    return commit_hash
