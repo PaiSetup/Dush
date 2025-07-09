@@ -18,6 +18,14 @@ class Framework:
     def get_command_decorator_multiple(self):
         return self._command_controller.register_command_multiple
 
+    def get_command_decorator_multiple_conditional(self):
+        def decorator_generator(condition):
+            if condition:
+                return self._command_controller.register_command_multiple
+            else:
+                return lambda function: function  # No-op decorator
+        return decorator_generator
+
     def get_framework_args(self):
         return self._command_line_args.get_framework_args()
 
