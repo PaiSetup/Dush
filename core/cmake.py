@@ -1,4 +1,4 @@
-from utils import run_command
+from utils import run_command, Stdout
 from utils.os_function import is_linux
 from utils.build_config import Compiler, Bitness
 from pathlib import Path
@@ -50,7 +50,7 @@ def setup_git_exclude_for_build_directory(build_dir):
             raise IncorrectGitWorkspaceError(f"{git_dir} does not exist")
 
     # Get the path to exclude file
-    top_level_dir = run_command("git rev-parse --show-toplevel", return_stdout=True, print_stdout=False)
+    top_level_dir = run_command("git rev-parse --show-toplevel", stdout=Stdout.return_back()).stdout
     top_level_dir = top_level_dir.strip()
     top_level_dir = Path(top_level_dir)
     git_dir = top_level_dir / ".git"

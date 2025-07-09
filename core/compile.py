@@ -1,5 +1,5 @@
 from utils.build_config import Compiler, Bitness
-from utils.run_command import run_command, wrap_command_with_vcvarsall, CommandError, CommandTimeout
+from utils.run_command import run_command, Stdout, wrap_command_with_vcvarsall, CommandError, CommandTimeout
 from utils import windows_only, EnvPath
 import xml.etree.ElementTree as XmlElementTree
 import multiprocessing
@@ -45,7 +45,8 @@ def compile_with_msbuild(msbuild_path, config, solution_path, targets, env={}, t
     for target in targets:
         command += f" /target:{target}"
     try:
-        run_command(command, env=env, timeout_seconds=timeout_seconds, print_stdout=print_stdout)
+        stdout = Stdout.print_to_console() if not print_stdout else Stdout.ignore()
+        run_command(command, env=env, timeout_seconds=timeout_seconds, stdout=stdout, stderr=stdout)
     except CommandError:
         raise CompilationFailedError("Compilation failed")
 

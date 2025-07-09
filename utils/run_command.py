@@ -7,30 +7,81 @@ from contextlib import ExitStack
 import platform
 
 
-class CommandError(Exception):
-    def __init__(self, output=None, command=None):
-        self.stdout = self.stderr = None
-        if output is not None:
-            if output[0] is not None:
-                self.stdout = output[0].decode("utf-8")
-            if output[1] is not None:
-                self.stderr = output[1].decode("utf-8")
-        if command is not None:
-            self.command = command
+class Command:
+    def __init__(self, command, process):
+        self.command = command
+        self.process = process
+        self.return_value = None
+        self.stdout = None
+        self.stderr = None
+
+    def wait(self):
+        if self._return_value is None:
+            self._return_value = self._process.wait()
+        return self._return_value
+
+
+
+class CommandErrorBase(Exception):
+    def __init__(self, command):
+        self._command = command
 
     def __str__(self):
-        lines = []
-        if self.stdout:
-            lines.append(f"stdout: {self.stdout}")
-        if self.stderr:
-            lines.append(f"stderr: {self.stderr}")
-        if self.command:
-            lines.append(f"command: {self.command}")
-        return '\n'.join(lines)
+        result = "fcommand: {self._command.command}"
+        if self._command.stdout:
+            result += f"\n\nstdout: {self._command.stdout}"
+        if self._command.stderr:
+            result += f"\n\nstderr: {self._command.stderr}"
+        return result
 
 
-class CommandTimeout(Exception):
+class CommandTimeout(CommandErrorBase):
     pass
+
+
+class CommandError(CommandErrorBase):
+    pass
+
+
+class Stdin:
+    def __init__(self, popen_arg, communicate_arg):
+        self.popen_arg = popen_arg
+        self.communicate_arg = communicate_arg
+
+    @staticmethod
+    def empty():
+        return Stdin(None, None)
+
+    @staticmethod
+    def file(file_handle):
+        return Stdin(file_handle, None)
+
+    @staticmethod
+    def string(content):
+        return Stdin(subprocess.PIPE, bytes(content, "utf-8"))
+
+
+class Stdout:
+    def __init__(self, popen_arg, should_return):
+        self.popen_arg = popen_arg
+        self.should_return = should_return
+
+    @staticmethod
+    def ignore():
+        return Stdout(subprocess.PIPE, False)  # We could use DEVNULL, but we need the outputs to throw errors
+
+    @staticmethod
+    def return_back():
+        return Stdout(subprocess.PIPE, True)
+
+    @staticmethod
+    def print_to_console():
+        return Stdout(None, False)
+
+    @staticmethod
+    def print_to_file(file_handle):
+        return Stdout(file_handle, False)
+
 
 class EnvSaver:
     def __enter__(self):
@@ -90,9 +141,9 @@ def run_command(
     raw_command,
     *,
     shell=False,
-    stdin=subprocess.PIPE,
-    return_stdout=False,
-    print_stdout=True,
+    stdin=Stdin.empty(),
+    stdout=Stdout.print_to_console(),
+    stderr=Stdout.print_to_console(),
     ignore_error=False,
     cwd = None,
     env={},
@@ -111,13 +162,7 @@ def run_command(
     else:
         command = raw_command
 
-    # Prepare handle for stdout/stderr
-    if return_stdout and print_stdout:
-        raise ValueError("Returning and printing stdout at the same time is not supported")
-    stdout = subprocess.PIPE
-    if print_stdout:
-        stdout = None
-
+    # Create ExitStack for conditional context managers
     with ExitStack() as context:
         # Set cwd
         if cwd:
@@ -136,19 +181,32 @@ def run_command(
             env_state.prepend_paths("LD_LIBRARY_PATH", ':', ld_library_paths)
 
         # Execute the command and wait for it to return
-        process = subprocess.Popen(command, shell=shell, stdin=stdin, stdout=stdout, stderr=stdout)
+        process = subprocess.Popen(command, shell=shell, stdin=stdin.popen_arg, stdout=stdout.popen_arg, stderr=stderr.popen_arg)
+        result = Command(raw_command, process)
         try:
-            output = process.communicate(timeout=timeout_seconds)
-            return_value = process.wait()
+            (stdout_data, stderr_data) = process.communicate(input=stdin.communicate_arg, timeout=timeout_seconds)
+            result.return_value = process.wait()
         except subprocess.TimeoutExpired:
             process.kill()
-            raise CommandTimeout()
+            raise CommandTimeout(result)
 
-    if return_value != 0 and not ignore_error:
-        raise CommandError(output=output, command=raw_command)
+        # Process output
+        if stdout_data is not None:
+            stdout_data = stdout_data.decode("utf-8")
+        if stderr_data is not None:
+            stderr_data = stderr_data.decode("utf-8")
+        if stdout.should_return:
+            result.stdout = stdout_data
+        if stderr.should_return:
+            result.stderr = stderr_data
 
-    if return_stdout and output[0] != None:
-        return output[0].decode("utf-8")
+    # Raise exception on error
+    if result.return_value != 0 and not ignore_error:
+        raise CommandError(result)
+
+    # Return the command object
+    return result
+
 
 @windows_only
 def wrap_command_with_vcvarsall(vc_varsall_path, command, verbose=False):

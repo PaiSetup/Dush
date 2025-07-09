@@ -13,6 +13,8 @@ from utils.run_command import (
     CommandError,
     CommandTimeout,
     open_url,
+    Stdin,
+    Stdout,
     run_command,
     wrap_command_with_vcvarsall,
 )

@@ -1,4 +1,4 @@
-from utils import RaiiChdir, run_command, CommandError
+from utils import RaiiChdir, run_command, Stdout, CommandError
 
 class GithubNotAllowed(Exception):
     pass
@@ -41,7 +41,7 @@ def rebase(branch, until_argument=""):
     latest commit merged 10 hours ago or earlier. Useful for example when we know there's an ongoing regression.
     """
     if until_argument:
-        commit = run_command(f"git log {branch} --first-parent --until={until_argument} -1 --format=%H", print_stdout=False, return_stdout=True)
+        commit = run_command(f"git log {branch} --first-parent --until={until_argument} -1 --format=%H", stdout=Stdout.return_back()).stdout
         commit = commit.strip()
     else:
         commit = branch
@@ -51,11 +51,11 @@ def gc():
     run_command("git gc")
 
 def find_baseline_commit(branch):
-    return run_command(f"git merge-base HEAD origin/{branch}", print_stdout=False, return_stdout=True)
+    return run_command(f"git merge-base HEAD origin/{branch}", stdout=Stdout.return_back()).stdout
 
 def get_branch():
     try:
-        branch = run_command("git branch --no-color --show-current", return_stdout=True, print_stdout=False)
+        branch = run_command("git branch --no-color --show-current", stdout=Stdout.return_back()).stdout
     except CommandError:
         raise IncorrectProjectDirectory("Not a git repo")
     if branch == "":
@@ -64,7 +64,7 @@ def get_branch():
         return branch.strip()
 
 def get_commit_hash(characters=None):
-    commit_hash = run_command("git rev-parse HEAD", return_stdout=True, print_stdout=False)
+    commit_hash = run_command("git rev-parse HEAD", stdout=Stdout.return_back()).stdout
     commit_hash = commit_hash.strip()
     if characters is not None:
         commit_hash = commit_hash[:characters]
