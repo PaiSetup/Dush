@@ -6,4 +6,4 @@ from core.install import install
 from core.unlock import unlock
 from core.meson import meson_setup, meson_configure
 from core.qmake import qmake, qmake_deploy
-from core.gerrit import checkout_gerrit_change_https
+from core.gerrit import checkout_gerrit_change_https, push_gerrit_change

@@ -82,3 +82,9 @@ def checkout_gerrit_change_https(base_url, repo, change_id):
     else:
         run_command(f"git checkout -b {branch} FETCH_HEAD")
         print(f"Fetched into branch {branch}")
+
+def push_gerrit_change(remote, target_branch):
+    # Push the current branch to Gerrit
+    command = f"git push {remote} HEAD:refs/for/{target_branch}"
+    print(command)
+    run_command(command)
