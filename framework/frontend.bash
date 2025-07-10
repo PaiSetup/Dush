@@ -62,8 +62,12 @@ fi
 # --------------------------------------------------------------------- project initialization
 dush_init_project() {
 	local project_name="$1"
-	local project_path="$(dirname "${BASH_SOURCE[1]}")" # this is a bit sketchy...
 	local main_func="$project_name"
+
+	# Get project path from calling script path. This is a bit sketchy, because it assumes the
+	# calling script will always be a main.sh script located in root of project path directory.
+	# But it simplifies the code and works as long as this design is followed.
+	local project_path="${BASH_SOURCE[1]%/*}"
 
 	# All metadata for the project will be stored in a global associative array. Some fields
 	# will be manually assigned in this function and some will be read from an .ini file. This
@@ -306,23 +310,54 @@ _dush_load_python_scripts_as_bash_functions() {
 	local project_path=${config["path"]}
 	local main_func=${config["main_func"]}
 
-	while read -r script_file; do
-		local script_name="${script_file%.*}"
-		local script_name="$(basename "$script_name")"
+	for script_file_raw in "$project_path"/*.py "$project_path"/**/*.py; do
+		# Normalize path to forward slashes
+		script_file="${script_file_raw//\\//}"
+
+		# Skip if file does not exist, which may happen if glob does not match anything and it returns the pattern itself.
+		if [ ! -e "$script_file" ]; then
+			continue
+		fi
+
+		# Skip OS-specific dirs
+		if  [[ "$script_file" == *"/$forbidden_dir/"* ]]; then
+			continue
+		fi
+
+		local script_name="${script_file%.*}"      # Substring removal to remove the extension
+		local script_name="${script_name##*/}"   # Substring removal to remove the directory path
 		if [ "$script_name" != "$main_func" ]; then
 			local function_definition="$script_name() { _dush_call_python_script \"$script_file\" \"\$@\" ; return \$? ; }"
 			eval "$function_definition"
 		fi
-	done <<< "$(find $project_path -name "*.py")"
+	done
 }
 
 _dush_load_bash_scripts() {
 	local project_path=${config["path"]}
 
-	local forbidden_dir="$([ "$DUSH_IS_LINUX" = 1 ] && echo windows || echo linux)"
+	if [ "$DUSH_IS_LINUX" == 1 ]; then
+		local forbidden_dir="windows"
+	else
+		local forbidden_dir="linux"
+	fi
 
-	for file in $(find "$project_path" -name "*.sh" -not -path "*/$forbidden_dir/*" -not -path "*/runnable/*" -not -path "*/main.sh" | sort); do
-		. "$file"
+	for script_file_raw in "$project_path"/*.sh "$project_path"/**/*.sh; do
+		# Normalize path to forward slashes
+		script_file="${script_file_raw//\\//}"
+
+		# Skip if file does not exist, which may happen if glob does not match anything and it returns the pattern itself.
+		if [ ! -e "$script_file" ]; then
+			continue
+		fi
+
+		# Skip OS-specific dirs and main.sh
+		if  [[ "$script_file" == *"/$forbidden_dir/"* ]] || \
+			[[ "$script_file" == */main.sh ]]; then
+			continue
+		fi
+
+		. "$script_file"
 	done
 }
 

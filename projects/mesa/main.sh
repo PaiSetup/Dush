@@ -1,6 +1,5 @@
 #!/bin/sh
 
-. $DUSH_PATH/framework/frontend.bash
 dush_init_project mesa
 
 if [ "$DUSH_IS_LINUX" = 1 ]; then

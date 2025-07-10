@@ -55,6 +55,7 @@ PYTHONPATH="{dush_path_bash}{pythonpath_separator}$PYTHONPATH"
 DUSH_PATH="{dush_path_bash}"
 DUSH_WORKSPACE="{dush_path_bash.parent}"
 DUSH_ENABLE_AUTOLOAD=1
+. $DUSH_PATH/framework/frontend.bash
 . $DUSH_PATH/projects/bashies/main.sh
 . $DUSH_PATH/projects/yuview/main.sh"""
 
