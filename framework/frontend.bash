@@ -1,34 +1,52 @@
 #!/bin/bash
 
-# Check OS
-export DUSH_IS_WINDOWS=0
-export DUSH_IS_LINUX=0
-if uname -a | grep -q MINGW; then
-	export DUSH_IS_WINDOWS=1
-elif uname -a | grep -q Linux; then
-	export DUSH_IS_LINUX=1
-fi
+# Initialize Dush framework.
+if [ "$DUSH_INITIALIZED" != "1" ]; then
+	DUSH_INITIALIZED=1
 
-# Prepare Python command. Gitbash on Windows requires a special invocation, otherwise it
-# hangs for some reason.
-if [ -z "$DUSH_PYTHON_COMMAND" ]; then
+	# Check OS
+	export DUSH_IS_WINDOWS=0
+	export DUSH_IS_LINUX=0
+	if uname -a | grep -q MINGW; then
+		export DUSH_IS_WINDOWS=1
+	elif uname -a | grep -q Linux; then
+		export DUSH_IS_LINUX=1
+	else
+		echo "WARNING: Dush framework could not detect OS."
+	fi
+
+	# Prepare Python command. Gitbash on Windows inside mintty requires a special invocation.
 	DUSH_PYTHON_COMMAND="python"
-fi
-if [ $DUSH_IS_WINDOWS = 1 ]; then
-	DUSH_PYTHON_COMMAND="winpty -Xallow-non-tty -Xplain $DUSH_PYTHON_COMMAND"
+	if [ $DUSH_IS_WINDOWS = 1 ]; then
+		# Detect whether we are running inside mintty, that does not connect to a TTY, so we
+		# need to use winpty to run Python. The command ps -f returns a list of processes
+		# with following columns: UID, PID, PPID, TTY, STIME, COMMAND. We use awk to check
+		# column 2 (PID) matches parent PID of this process (bash) and then print column 6 (TTY).
+		# In mintty, this column will be "mintty". In Windows Terminal it will be empty, because
+		# parent PID is always 1 for some reason. But this is good enough to detect mintty.
+		terminal="$(ps -f | awk -v pid=$PPID '$2 == pid { print $6 }')"
+		if [[ "$terminal" =~ "/mintty" ]]; then
+			DUSH_PYTHON_COMMAND="winpty -Xallow-non-tty -Xplain $DUSH_PYTHON_COMMAND"
+		fi
+	fi
+
+	# Validate workspace path
+	if [ -z "$DUSH_WORKSPACE" ]; then
+		echo "ERROR: \$DUSH_WORKSPACE is not set"
+	fi
+	if ! [ -d "$DUSH_WORKSPACE" ]; then
+		echo "ERROR: \$DUSH_WORKSPACE points to invalid directory - $DUSH_WORKSPACE"
+	fi
+	export DUSH_WORKSPACE="$DUSH_WORKSPACE"
+
+	# Validate Dush path
+	if [ -z "$DUSH_PATH" ]; then
+		echo "ERROR: \$DUSH_PATH is not set"
+	fi
+	export DUSH_PATH="$DUSH_PATH"
 fi
 
-# Validate workspace path
-if [ -z "$DUSH_WORKSPACE" ]; then
-	echo "ERROR: \$DUSH_WORKSPACE is not set"
-fi
-if ! [ -d "$DUSH_WORKSPACE" ]; then
-	echo "ERROR: \$DUSH_WORKSPACE points to invalid directory - $DUSH_WORKSPACE"
-fi
-export DUSH_WORKSPACE="$DUSH_WORKSPACE"
 
-# Validate Dush path
-export DUSH_PATH="$DUSH_PATH"
 
 # Validate autoload
 if [ -z "$DUSH_ENABLE_AUTOLOAD" ]; then
