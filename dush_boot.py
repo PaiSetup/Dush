@@ -25,6 +25,7 @@ def create_profile_symlinks():
         (home / ".bashrc", "bashrc", False),
         (home / ".profile", "profile", False),
         (home / ".gitconfig", "gitconfig", False),
+        (home / ".ssh/config", "sshconfig", False),
     ]
     if is_windows:
         profiles += [
