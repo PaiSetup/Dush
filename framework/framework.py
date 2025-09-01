@@ -93,14 +93,11 @@ class Framework:
 
         # Print available commands
         self._command_controller.print_help()
+        print()
 
         # Print help for current command
         if command is not None:
-            arg_spec = inspect.getfullargspec(command)
-            arg_names = arg_spec[0]
-            print(f'Command options for "{command.__name__}" command:')
-            for arg_name in arg_names:
-                print(f"  --{arg_name}=")
+            self._command_line_args.print_help_for_command(command)
             print()
 
         # Print help for framework args

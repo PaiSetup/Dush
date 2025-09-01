@@ -16,7 +16,9 @@ if [ "$DUSH_INITIALIZED" != "1" ]; then
 	fi
 
 	# Prepare Python command. Gitbash on Windows inside mintty requires a special invocation.
-	DUSH_PYTHON_COMMAND="python"
+	if [ -z "$DUSH_PYTHON_COMMAND" ]; then
+		DUSH_PYTHON_COMMAND="python"
+	fi
 	if [ $DUSH_IS_WINDOWS = 1 ]; then
 		# Detect whether we are running inside mintty, that does not connect to a TTY, so we
 		# need to use winpty to run Python. The command ps -f returns a list of processes

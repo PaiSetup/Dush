@@ -27,7 +27,7 @@ class CommandErrorBase(Exception):
         self._command = command
 
     def __str__(self):
-        result = "fcommand: {self._command.command}"
+        result = f"command: {self._command.command}"
         if self._command.stdout:
             result += f"\n\nstdout: {self._command.stdout}"
         if self._command.stderr:

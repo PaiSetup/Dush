@@ -75,4 +75,3 @@ class CommandController:
             print("Available commands:")
             for command_name in self._commands.keys():
                 print(f"    {command_name}")
-            print()

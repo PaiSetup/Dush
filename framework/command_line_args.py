@@ -1,5 +1,5 @@
 import argparse
-import sys
+import inspect
 
 class CommandLineArgs:
     def __init__(self):
@@ -42,7 +42,8 @@ class CommandLineArgs:
         except ValueError:
             command_args = args
             args = []
-        (self._command_args, self._command_kwargs) = CommandLineArgs._parse_to_args_kwargs(command_args)
+        are_kwargs_supported = self._are_kwargs_supported(command_controller.get_command(self.command_name))
+        (self._command_args, self._command_kwargs) = CommandLineArgs._parse_to_args_kwargs(command_args, are_kwargs_supported)
 
         # Rest of tokens are global arguments intended for the framework
         (self._framework_args, unparsed_args) = self._framework_args_parser.parse_known_args(args)
@@ -70,13 +71,53 @@ class CommandLineArgs:
         for line in help_lines:
             print(line)
 
+    def _are_kwargs_supported(self, command):
+        if command is None:
+            return True
+
+        # If the command takes positional *args, then do not parse --key=value as kwargs, but instead
+        # pass them verbatim as positional arguments.
+        arg_spec = inspect.getfullargspec(command)
+        vararg_name = arg_spec[1]
+        return vararg_name is None
+
+    def print_help_for_command(self, command):
+        arg_spec = inspect.getfullargspec(command)
+        arg_names = arg_spec[0]
+        arg_defaults = arg_spec[3]
+        varargs_name = arg_spec[1]
+        kwargs_supported = varargs_name is None
+
+        # TODO: simply converting to string is ok for strings and ints, but we'd need something like interpret_arg for enums.
+        arg_default_strs = [f'"{default}"' for default in arg_defaults]
+        required_args_count = len(arg_names) - len(arg_defaults)
+        if required_args_count > 0:
+            arg_default_strs = required_args_count * [None] + arg_default_strs
+
+        if len(arg_names) == 0:
+            print(f"The {command.__name__} command does not take any arguments.")
+        elif kwargs_supported:
+            print(f'The {command.__name__} command supports both positional or keyword (key=value) styles of passing arguments. Arguments are:')
+            for name, default in zip(arg_names, arg_default_strs):
+                if default is None:
+                    default="  (required)"
+                print(f"  --{name}={default}")
+        else:
+            print(f'The {command.__name__} command supports only positional style of passing arguments. Arguments are:')
+            print("  ", end='')
+            for name, default in zip(arg_names, arg_default_strs):
+                default_str = f"(default: {default})" if default is not None else ""
+                print(f"{name}{default_str}", end=', ')
+            print(f"*{varargs_name}")
+
+
     @staticmethod
-    def _parse_to_args_kwargs(input_args):
+    def _parse_to_args_kwargs(input_args, are_kwargs_supported):
         args = []
         kwargs = {}
 
         for input_arg in input_args:
-            if input_arg.startswith("--"):
+            if input_arg.startswith("--") and are_kwargs_supported:
                 # This is a keyword arg
 
                 if input_arg.count('=') != 1:
@@ -85,7 +126,7 @@ class CommandLineArgs:
                 key = input_arg[2:equal_sign_index]
                 value = input_arg[equal_sign_index+1:]
                 kwargs[key] = value
-            elif input_arg.startswith("\\--"):
+            elif input_arg.startswith("\\--") and are_kwargs_supported:
                 # This is a normal arg that start with "--" and has escape backslash, so it's not treated as keyword
                 args.append(input_arg[1:])
             else:
