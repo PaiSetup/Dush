@@ -72,3 +72,34 @@ class RaiiChdir:
 
     def __exit__(self, *args):
         os.chdir(self._saved_cwd)
+
+
+class LocalOrRemotePath:
+    def __init__(self, path, is_ssh, ssh_host):
+        self._path = Path(path)
+        self._is_ssh = is_ssh
+        self._ssh_host = ssh_host
+
+    @staticmethod
+    def create_scp(host, path):
+        return LocalOrRemotePath(path=path, is_ssh=True, ssh_host=host)
+
+    @staticmethod
+    def create_mounted(path):
+        return LocalOrRemotePath(path=path, is_ssh=False, ssh_host=None)
+
+    def is_ssh(self):
+        return self._is_ssh
+
+    def get_ssh_full_path(self):
+        if not self._is_ssh:
+            raise ValueError("This path is not an SSH path")
+        return f"{self._ssh_host}:{self._path}"
+
+    def get_mounted_full_path(self):
+        if self._is_ssh:
+            raise ValueError("This path is not a mounted path")
+        return self._path
+
+    def __truediv__(self, other):
+        return LocalOrRemotePath(path=self._path / other, is_ssh=self._is_ssh, ssh_host=self._ssh_host)

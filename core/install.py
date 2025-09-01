@@ -1,39 +1,23 @@
 from pathlib import Path
 import shutil
 import tempfile
-from utils.run_command import run_command
+from utils import run_command, LocalOrRemotePath
 
 class IncorrectFileError(Exception):
     pass
 
-def _is_scp(dst_dir):
-    colon_pos = str(dst_dir).find(":")
-    if colon_pos == -1:
-        return False
-
-    # Before the colon there could be a host name as in "host:/home/johndoe" or a drive name
-    # as in "C:\develop\linux". We make an assumption that host names are never one-letter.
-    # TODO: create some structure for scp paths, so we don't have to have such heuristics.
-    match colon_pos:
-        case 0:
-            raise ValueError("Directory cannot start with a colon")
-        case 1:
-            return False # One letter before colon, probably a drive name
-        case _:
-            return True # Multiple letter before colon, probably host name for scp
-
-def install(src_dir, dst_dir, filenames, tmp_dir, *, follow_symlinks=True):
-    if _is_scp(dst_dir):
+def install(src_dir : Path, dst_dir : LocalOrRemotePath, filenames : list[str], tmp_dir : LocalOrRemotePath, *, follow_symlinks=True):
+    if dst_dir.is_ssh():
         files = [ f"'{str(Path(src_dir) / f)}'" for f in filenames]
         files = ' '.join(files)
-        command = f"scp {files} {dst_dir}"
+        command = f"scp {files} {dst_dir.get_ssh_full_path()}"
         print(command)
         run_command(command)
     else:
         for filename_raw in filenames:
             filename = Path(filename_raw)
             src = src_dir / filename
-            dst = dst_dir / filename
+            dst = dst_dir.get_mounted_full_path() / filename
 
             if not src.is_file():
                 raise IncorrectFileError(f"File to install {src} does not exist.")
