@@ -1,8 +1,14 @@
 import tempfile
 import shutil
 from pathlib import Path
+from utils import LocalOrRemotePath
 
 def unlock(file_path, tmp_dir, keep=True):
+    if isinstance(file_path, LocalOrRemotePath):
+        file_path = file_path.get_mounted_full_path()
+    if isinstance(tmp_dir, LocalOrRemotePath):
+        tmp_dir = tmp_dir.get_mounted_full_path()
+
     if not file_path.exists():
         return
 

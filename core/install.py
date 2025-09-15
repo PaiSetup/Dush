@@ -33,7 +33,7 @@ def install(src_dir : Path, dst_dir : LocalOrRemotePath, filenames : list[str], 
                 if tmp_dir is None:
                     raise
 
-                with tempfile.NamedTemporaryFile(prefix=f"{filename.stem}_", suffix=filename.suffix, dir=tmp_dir, delete=True) as dst_tmp:
+                with tempfile.NamedTemporaryFile(prefix=f"{filename.stem}_", suffix=filename.suffix, dir=tmp_dir.get_mounted_full_path(), delete=True) as dst_tmp:
                     dst_tmp_path = Path(dst_tmp.name)
                 dst_tmp_path.unlink(missing_ok=True) # This shouldn't be needed, because NamedTemporaryFile should've already removed the file, but it sometimes doesn't do it on remote drives
 
