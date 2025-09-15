@@ -89,13 +89,20 @@ class CommandLineArgs:
         kwargs_supported = varargs_name is None
 
         # TODO: simply converting to string is ok for strings and ints, but we'd need something like interpret_arg for enums.
-        arg_default_strs = [f'"{default}"' for default in arg_defaults]
-        required_args_count = len(arg_names) - len(arg_defaults)
+        if arg_defaults is not None:
+            arg_default_strs = [f'"{default}"' for default in arg_defaults]
+        else:
+            arg_default_strs = []
+        required_args_count = len(arg_names) - len(arg_default_strs)
         if required_args_count > 0:
             arg_default_strs = required_args_count * [None] + arg_default_strs
 
         if len(arg_names) == 0:
-            print(f"The {command.__name__} command does not take any arguments.")
+            if varargs_name is not None:
+                print(f'The {command.__name__} command supports only positional style of passing arguments. Arguments are:')
+                print(f"  *{varargs_name}")
+            else:
+                print(f'The {command.__name__} command does not take any arguments.')
         elif kwargs_supported:
             print(f'The {command.__name__} command supports both positional or keyword (key=value) styles of passing arguments. Arguments are:')
             for name, default in zip(arg_names, arg_default_strs):
