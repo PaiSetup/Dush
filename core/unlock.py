@@ -1,7 +1,9 @@
-import tempfile
 import shutil
+import tempfile
 from pathlib import Path
+
 from utils import LocalOrRemotePath
+
 
 def unlock(file_path, tmp_dir, keep=True):
     if isinstance(file_path, LocalOrRemotePath):

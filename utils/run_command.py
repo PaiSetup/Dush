@@ -1,14 +1,15 @@
-import subprocess
-import shlex
-import os
-from utils.os_function import is_windows, windows_only
-from utils.paths import RaiiChdir
-from contextlib import ExitStack
-import platform
 import contextlib
 import datetime
 import io
+import os
+import platform
+import shlex
+import subprocess
 import sys
+from contextlib import ExitStack
+
+from utils.os_function import is_windows, windows_only
+from utils.paths import RaiiChdir
 
 
 class Command:
@@ -24,7 +25,6 @@ class Command:
         if self._return_value is None:
             self._return_value = self._process.wait()
         return self._return_value
-
 
 
 class CommandErrorBase(Exception):
@@ -194,7 +194,7 @@ def run_command(
 
             # Prepend new paths to current PATH and LD_LIBRARY_PATH values
             env_state.prepend_paths("PATH", os.pathsep, paths)
-            env_state.prepend_paths("LD_LIBRARY_PATH", ':', ld_library_paths)
+            env_state.prepend_paths("LD_LIBRARY_PATH", ":", ld_library_paths)
 
         # Execute the command and wait for it to return
         process = subprocess.Popen(command, shell=shell, stdin=stdin.popen_arg, stdout=stdout.popen_arg, stderr=stderr.popen_arg)
@@ -236,11 +236,11 @@ class RedirectStdStreams:
 
         if self.stdout_target:
             os.dup2(self.stdout_target.fileno(), 1)  # replace stdout
-            sys.stdout = os.fdopen(os.dup(1), 'w', buffering=1)  # update Python's sys.stdout
+            sys.stdout = os.fdopen(os.dup(1), "w", buffering=1)  # update Python's sys.stdout
 
         if self.stderr_target:
             os.dup2(self.stderr_target.fileno(), 2)  # replace stderr
-            sys.stderr = os.fdopen(os.dup(2), 'w', buffering=1)
+            sys.stderr = os.fdopen(os.dup(2), "w", buffering=1)
 
         return self
 
@@ -248,12 +248,13 @@ class RedirectStdStreams:
         # restore stdout
         os.dup2(self.saved_fds[1], 1)
         os.close(self.saved_fds[1])
-        sys.stdout = os.fdopen(os.dup(1), 'w', buffering=1)
+        sys.stdout = os.fdopen(os.dup(1), "w", buffering=1)
 
         # restore stderr
         os.dup2(self.saved_fds[2], 2)
         os.close(self.saved_fds[2])
-        sys.stderr = os.fdopen(os.dup(2), 'w', buffering=1)
+        sys.stderr = os.fdopen(os.dup(2), "w", buffering=1)
+
 
 def run_function(
     function,
@@ -289,6 +290,7 @@ def run_function(
                     context.enter_context(redirect_func(popen_arg))
                     context.enter_context(RedirectStdStreams(popen_arg, is_stdout=is_stdout))
                     return None
+
         stdout_buffer = redirect_output(stdout.popen_arg, is_stdout=True)
         stderr_buffer = redirect_output(stderr.popen_arg, is_stdout=False)
 
@@ -317,6 +319,7 @@ def run_function(
         # Return the command object
         return result
 
+
 @windows_only
 def wrap_command_with_vcvarsall(vc_varsall_path, command, verbose=False):
     vc_varsall_command = f'"{vc_varsall_path}" amd64'
@@ -334,9 +337,10 @@ def wrap_command_with_vcvarsall(vc_varsall_path, command, verbose=False):
             f"{vc_varsall_command} > nul 2>&1",
             command,
         ]
-    wrapped_command = ' & '.join(wrapped_command)
-    wrapped_command = f'cmd /C "{wrapped_command}"' # Should probably escape quotes...
+    wrapped_command = " & ".join(wrapped_command)
+    wrapped_command = f'cmd /C "{wrapped_command}"'  # Should probably escape quotes...
     return wrapped_command
+
 
 def open_url(url):
     if is_windows():

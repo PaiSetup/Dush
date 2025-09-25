@@ -1,10 +1,13 @@
-from utils import run_command, Stdout
-from utils.os_function import is_linux
-from utils.build_config import Compiler, Bitness
 from pathlib import Path
+
+from utils import Stdout, run_command
+from utils.build_config import Bitness, Compiler
+from utils.os_function import is_linux
+
 
 class IncorrectGitWorkspaceError(Exception):
     pass
+
 
 def generate_config_options(config):
     options = ""
@@ -36,11 +39,11 @@ def setup_git_exclude_for_build_directory(build_dir):
         elif git_dir.is_file():
             # We are in a submdoule with a .git file. It contains a path
             # to the git directory of this module.
-            with open('.git', 'r') as file:
+            with open(".git", "r") as file:
                 for line in file.readlines():
                     prefix = "gitdir: "
                     if line.startswith(prefix):
-                        module_git_dir = line[len(prefix):]
+                        module_git_dir = line[len(prefix) :]
                         module_git_dir = module_git_dir.strip()
                         module_git_dir = git_dir.parent / module_git_dir
                         module_git_dir = module_git_dir.resolve()
@@ -59,7 +62,7 @@ def setup_git_exclude_for_build_directory(build_dir):
     # Gather existing lines in the exclude file
     with open(exclude_file, "r") as file:
         existing_lines = file.read()
-        existing_lines = existing_lines.split('\n')
+        existing_lines = existing_lines.split("\n")
 
     # Add build dir if neccessary
     new_exclude = build_dir.relative_to(top_level_dir)
@@ -67,24 +70,28 @@ def setup_git_exclude_for_build_directory(build_dir):
     if new_exclude not in existing_lines:
         with open(exclude_file, "w") as file:
             for line in existing_lines:
-                file.write(f'{line}\n')
-            file.write(f'{new_exclude}\n')
+                file.write(f"{line}\n")
+            file.write(f"{new_exclude}\n")
 
 
-def cmake(config, build_dir, source_dir,
-          additional_cmake_options : list,
-          additional_paths : list,
-          additional_env : dict,
-          additional_ld_library_paths : list,
-          *,
-          append_config_options = True,
-          verbose = True):
+def cmake(
+    config,
+    build_dir,
+    source_dir,
+    additional_cmake_options: list,
+    additional_paths: list,
+    additional_env: dict,
+    additional_ld_library_paths: list,
+    *,
+    append_config_options=True,
+    verbose=True,
+):
     build_dir.mkdir(exist_ok=True)
 
     command = "cmake"
     command += f" -B {build_dir} -S {source_dir}"
     command += " -Wno-dev "
-    command += ' '.join(additional_cmake_options)
+    command += " ".join(additional_cmake_options)
     if append_config_options:
         command += generate_config_options(config)
 

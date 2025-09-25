@@ -1,14 +1,23 @@
-from utils.build_config import Compiler, Bitness
-from utils.run_command import run_command, Stdout, wrap_command_with_vcvarsall, CommandError, CommandTimeout
-from utils import windows_only, EnvPath
-import xml.etree.ElementTree as XmlElementTree
 import multiprocessing
-from pathlib import Path
 import os
 import re
+import xml.etree.ElementTree as XmlElementTree
+from pathlib import Path
+
+from utils import EnvPath, windows_only
+from utils.build_config import Bitness, Compiler
+from utils.run_command import (
+    CommandError,
+    CommandTimeout,
+    Stdout,
+    run_command,
+    wrap_command_with_vcvarsall,
+)
+
 
 class CompilationFailedError(Exception):
     pass
+
 
 def compile_with_cmake(config, build_dir, targets, additional_env={}, additional_paths=[], additional_ld_library_paths=[]):
     build_type_args = ""
@@ -21,12 +30,14 @@ def compile_with_cmake(config, build_dir, targets, additional_env={}, additional
     except CommandError:
         raise CompilationFailedError("Compilation failed")
 
+
 def compile_with_ninja(target, build_dir):
     command = f"ninja -C {build_dir} {target}"
     try:
         run_command(command)
     except CommandError:
         raise CompilationFailedError("Compilation failed")
+
 
 @windows_only
 def compile_with_msbuild(msbuild_path, config, solution_path, targets, env={}, timeout_seconds=None, print_stdout=True):
@@ -50,13 +61,8 @@ def compile_with_msbuild(msbuild_path, config, solution_path, targets, env={}, t
     except CommandError:
         raise CompilationFailedError("Compilation failed")
 
-def compile_with_make(target="",
-                      directory=None,
-                      *,
-                      additional_paths=[],
-                      additional_env={},
-                      all_cores=True,
-                      verbose=False):
+
+def compile_with_make(target="", directory=None, *, additional_paths=[], additional_env={}, all_cores=True, verbose=False):
     parallelism_arg = ""
     if all_cores:
         parallelism_arg = f"-j{multiprocessing.cpu_count()}"
@@ -68,13 +74,9 @@ def compile_with_make(target="",
     command = f"make {target} {parallelism_arg}"
     run_command(command, env=env, paths=additional_paths, cwd=directory)
 
+
 @windows_only
-def compile_with_nmake(target="",
-                            directory=None,
-                            vc_varsall_path=None,
-                            additional_paths=[],
-                            additional_env={},
-                            verbose=False):
+def compile_with_nmake(target="", directory=None, vc_varsall_path=None, additional_paths=[], additional_env={}, verbose=False):
     # jom is an nmake clone that can build in parallel.
     # Fall back to nmake if it's not available.
     jom_path = EnvPath("JOM_PATH", required=False, is_directory=False)
@@ -87,6 +89,7 @@ def compile_with_nmake(target="",
         command = wrap_command_with_vcvarsall(vc_varsall_path, command, verbose)
 
     run_command(command, env=additional_env, paths=additional_paths, cwd=directory)
+
 
 @windows_only
 def extract_target_names_from_msbuild_metaproj(msbuild_path, config, solution_path, env={}, cleanup_root_dir=None):
@@ -111,11 +114,11 @@ def extract_target_names_from_msbuild_metaproj(msbuild_path, config, solution_pa
 
     # Parse the XML to a dict - keys are project names visible in VS, values are target names for MSBuild
     target_mapping = {}
-    for target_node in root_node.findall('{*}Target'):
-        target_name = target_node.attrib['Name']
+    for target_node in root_node.findall("{*}Target"):
+        target_name = target_node.attrib["Name"]
 
         # Skip targets with colons, because they are special targets for cleaning, rebuilding and publishing
-        if ':' in target_name:
+        if ":" in target_name:
             continue
 
         # Get <MSBuild> tag
@@ -126,7 +129,7 @@ def extract_target_names_from_msbuild_metaproj(msbuild_path, config, solution_pa
         # Get "Condition" attrib in <MSBuild> and match it to extract metaproj path of the target
         if "Condition" not in msbuild_node.attrib:
             continue
-        condition = msbuild_node.attrib['Condition']
+        condition = msbuild_node.attrib["Condition"]
         condition_match = re.match(r"'%\(ProjectReference.Identity\)' == '(.*)'", condition)
         if condition_match is None:
             continue
@@ -138,9 +141,9 @@ def extract_target_names_from_msbuild_metaproj(msbuild_path, config, solution_pa
         #  - open metaproj, find .vcxproj
         #  - open .sln, find line where .vcxproj is defined and extract the name
         vs_name = target_name
-        slash_pos = vs_name.rfind('\\')
+        slash_pos = vs_name.rfind("\\")
         if slash_pos != -1:
-            vs_name = vs_name[slash_pos+1:]
+            vs_name = vs_name[slash_pos + 1 :]
 
         # Write entry to the dict
         target_mapping[vs_name] = target_name
@@ -156,6 +159,6 @@ def extract_target_names_from_msbuild_metaproj(msbuild_path, config, solution_pa
         for root, _, files in os.walk(cleanup_root_dir):
             for file_name in files:
                 file = Path(root) / file_name
-                extension = ''.join(file.suffixes)
-                if extension in ['.sln.metaproj', '.sln.metaproj.tmp', '.vcxproj.metaproj', '.vcxproj.metaproj.tmp']:
+                extension = "".join(file.suffixes)
+                if extension in [".sln.metaproj", ".sln.metaproj.tmp", ".vcxproj.metaproj", ".vcxproj.metaproj.tmp"]:
                     file.unlink(missing_ok=False)

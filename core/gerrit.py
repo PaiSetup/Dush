@@ -1,11 +1,14 @@
-from utils import run_command, Stdin, Stdout, CommandError
-import http.client
 import base64
+import http.client
 import json
 from urllib.parse import urlparse
 
+from utils import CommandError, Stdin, Stdout, run_command
+
+
 class GerritError(Exception):
     pass
+
 
 def get_gerrit_lastest_change_revision(base_url, change_id):
     # Get credentials from git. This assumes we already used git to clone the repo and have credentials stored.
@@ -21,9 +24,7 @@ def get_gerrit_lastest_change_revision(base_url, change_id):
     # Make HTTPS request to gerrit
     host = urlparse(base_url).netloc
     conn = http.client.HTTPSConnection(host)
-    headers = {
-        "Authorization": f"Basic {auth_header}"
-    }
+    headers = {"Authorization": f"Basic {auth_header}"}
     conn.request("GET", f"/a/changes/{change_id}/detail", headers=headers)
     response = conn.getresponse()
     if response.status != 200:
@@ -49,6 +50,7 @@ def get_gerrit_lastest_change_revision(base_url, change_id):
         raise GerritError("No patch sets found")
 
     return latest_revision
+
 
 def checkout_gerrit_change_https(base_url, repo, change_id, force):
     # Get latest revision
@@ -87,6 +89,7 @@ def checkout_gerrit_change_https(base_url, repo, change_id, force):
     else:
         run_command(f"git checkout -b {branch} FETCH_HEAD")
         print(f"Fetched into branch {branch}")
+
 
 def push_gerrit_change(remote, target_branch):
     # Push the current branch to Gerrit

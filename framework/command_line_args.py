@@ -1,13 +1,14 @@
 import argparse
 import inspect
 
+
 class CommandLineArgs:
     def __init__(self):
         self._framework_args_parser = argparse.ArgumentParser(add_help=False, exit_on_error=False)
         self._framework_args_parser.add_argument("-p", "--project-dir-force")
-        self._framework_args_parser.add_argument('-v', '--verbose', action='store_true')
-        self._framework_args_parser.add_argument('-q', '--quiet', action='store_true')
-        self._framework_args_parser.add_argument('-h', '--help', action='store_true')
+        self._framework_args_parser.add_argument("-v", "--verbose", action="store_true")
+        self._framework_args_parser.add_argument("-q", "--quiet", action="store_true")
+        self._framework_args_parser.add_argument("-h", "--help", action="store_true")
 
         self._process_name = None
         self._command_args = None
@@ -27,7 +28,7 @@ class CommandLineArgs:
         elif command_controller.is_multi_command():
             # When @command decorators are used, we have many possible commands identified by name.
             # First cmdline argument is interpreted as the command name used for lookup later.
-            if len(args) == 0 or args[0].startswith('-'):
+            if len(args) == 0 or args[0].startswith("-"):
                 raise KeyError("No command specified")
             self.command_name = args[0]
             args = args[1:]
@@ -38,7 +39,7 @@ class CommandLineArgs:
         try:
             divider_index = args.index("--")
             command_args = args[:divider_index]
-            args = args[divider_index+1:]
+            args = args[divider_index + 1 :]
         except ValueError:
             command_args = args
             args = []
@@ -99,24 +100,23 @@ class CommandLineArgs:
 
         if len(arg_names) == 0:
             if varargs_name is not None:
-                print(f'The {command.__name__} command supports only positional style of passing arguments. Arguments are:')
+                print(f"The {command.__name__} command supports only positional style of passing arguments. Arguments are:")
                 print(f"  *{varargs_name}")
             else:
-                print(f'The {command.__name__} command does not take any arguments.')
+                print(f"The {command.__name__} command does not take any arguments.")
         elif kwargs_supported:
-            print(f'The {command.__name__} command supports both positional or keyword (key=value) styles of passing arguments. Arguments are:')
+            print(f"The {command.__name__} command supports both positional or keyword (key=value) styles of passing arguments. Arguments are:")
             for name, default in zip(arg_names, arg_default_strs):
                 if default is None:
-                    default="  (required)"
+                    default = "  (required)"
                 print(f"  --{name}={default}")
         else:
-            print(f'The {command.__name__} command supports only positional style of passing arguments. Arguments are:')
-            print("  ", end='')
+            print(f"The {command.__name__} command supports only positional style of passing arguments. Arguments are:")
+            print("  ", end="")
             for name, default in zip(arg_names, arg_default_strs):
                 default_str = f"(default: {default})" if default is not None else ""
-                print(f"{name}{default_str}", end=', ')
+                print(f"{name}{default_str}", end=", ")
             print(f"*{varargs_name}")
-
 
     @staticmethod
     def _parse_to_args_kwargs(input_args, are_kwargs_supported):
@@ -127,11 +127,11 @@ class CommandLineArgs:
             if input_arg.startswith("--") and are_kwargs_supported:
                 # This is a keyword arg
 
-                if input_arg.count('=') != 1:
-                    raise ValueError(f"Argument \"{input_arg}\" is incorrect - keyword arguments should be specified as --key=value")
+                if input_arg.count("=") != 1:
+                    raise ValueError(f'Argument "{input_arg}" is incorrect - keyword arguments should be specified as --key=value')
                 equal_sign_index = input_arg.index("=")
                 key = input_arg[2:equal_sign_index]
-                value = input_arg[equal_sign_index+1:]
+                value = input_arg[equal_sign_index + 1 :]
                 kwargs[key] = value
             elif input_arg.startswith("\\--") and are_kwargs_supported:
                 # This is a normal arg that start with "--" and has escape backslash, so it's not treated as keyword

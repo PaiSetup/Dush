@@ -1,6 +1,7 @@
 import enum
 from pathlib import Path
 
+
 def interpret_arg(arg, arg_type, name, **kwargs):
     if arg_type == str:
         try:
@@ -42,6 +43,7 @@ def interpret_arg(arg, arg_type, name, **kwargs):
         return arg_type.interpret_arg(arg, name, **kwargs)
     else:
         raise TypeError("Unknown type for interpret_arg")
+
 
 class OptionEnable(enum.Enum):
     Auto = enum.auto()

@@ -1,14 +1,17 @@
 import shutil
 
+
 class IncorrectDirectoryError(Exception):
     pass
+
 
 class CleanupPermissionError(Exception):
     def __init__(self, file):
         self.file = file
 
     def __str__(self):
-        return f'cannot remove {self.file}'
+        return f"cannot remove {self.file}"
+
 
 def clean(build_dir):
     if not build_dir.exists():

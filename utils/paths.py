@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
 
+
 class PredefinedPath:
     def __init__(self, required, is_directory, lazy_resolve):
         self._path = None
@@ -42,6 +43,7 @@ class HardcodedPath(PredefinedPath):
     def _resolve(self):
         return Path(self._hardcoded_path)
 
+
 class EnvPath(PredefinedPath):
     def __init__(self, env_name, required=True, is_directory=True, lazy_resolve=True):
         self._env_name = env_name
@@ -52,9 +54,10 @@ class EnvPath(PredefinedPath):
             return Path(os.environ[self._env_name])
         except KeyError:
             if self._required:
-                raise KeyError(f'Cannot find path. Please define it in {self._env_name} environment variable.')
+                raise KeyError(f"Cannot find path. Please define it in {self._env_name} environment variable.")
             else:
                 return None
+
 
 class RaiiChdir:
     def __init__(self, new_cwd):

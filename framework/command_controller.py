@@ -1,5 +1,6 @@
 import enum
 
+
 class CommandController:
     """
     This class manages commands that are available for user. Each command has a name and a function
@@ -14,7 +15,8 @@ class CommandController:
     MultipleCommands means there are many commands, each with a different name. User will be able
     to select the command to run in command line.
     """
-    MAIN_COMMAND_NAME = 'main'
+
+    MAIN_COMMAND_NAME = "main"
 
     class State(enum.Enum):
         Uninitialized = enum.auto()
