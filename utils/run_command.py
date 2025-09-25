@@ -142,6 +142,15 @@ def generate_bat_script(raw_command, cwd, paths, env):
     for line in lines:
         print(line)
 
+
+def print_run_command(raw_command, cwd):
+    if cwd is None:
+        cwd = os.getcwd()
+    else:
+        cwd = Path(cwd).absolute()
+    print(f"Running command: {raw_command} (in directory {cwd})")
+
+
 def run_command(
     raw_command,
     *,
@@ -150,16 +159,18 @@ def run_command(
     stdout=Stdout.print_to_console(),
     stderr=Stdout.print_to_console(),
     ignore_error=False,
-    cwd = None,
+    cwd=None,
     env={},
     paths=[],
     ld_library_paths=[],
     generate_bat=False,
-    timeout_seconds=None
+    timeout_seconds=None,
 ):
     # Debug options
     if generate_bat:
         generate_bat_script(raw_command, cwd, paths, env)
+    if framework.framework.get_framework_args().verbose:
+        print_run_command(raw_command, cwd)
 
     # Prepare command to execute
     if not shell and platform.system() != "Windows":
