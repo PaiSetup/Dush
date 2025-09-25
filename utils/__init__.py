@@ -16,5 +16,6 @@ from utils.run_command import (
     Stdin,
     Stdout,
     run_command,
+    run_function,
     wrap_command_with_vcvarsall,
 )
