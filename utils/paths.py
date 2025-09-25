@@ -91,6 +91,9 @@ class LocalOrRemotePath:
     def is_ssh(self):
         return self._is_ssh
 
+    def is_mounted(self):
+        return not self._is_ssh
+
     def get_ssh_full_path(self):
         if not self._is_ssh:
             raise ValueError("This path is not an SSH path")

@@ -6,7 +6,13 @@ from utils import run_command, LocalOrRemotePath
 class IncorrectFileError(Exception):
     pass
 
-def install(src_dir : Path, dst_dir : LocalOrRemotePath, filenames : list[str], tmp_dir : LocalOrRemotePath, *, follow_symlinks=True):
+def install(src_dir : Path|LocalOrRemotePath, dst_dir : LocalOrRemotePath, filenames : list[str], tmp_dir : LocalOrRemotePath, *, follow_symlinks=True):
+    if type(src_dir) is LocalOrRemotePath:
+        if src_dir.is_mounted():
+            src_dir = src_dir.get_mounted_full_path()
+        else:
+            raise IncorrectFileError("Ssh source directory is not supported")
+
     if dst_dir.is_ssh():
         files = [ f"'{str(Path(src_dir) / f)}'" for f in filenames]
         files = ' '.join(files)
