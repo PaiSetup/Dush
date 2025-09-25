@@ -50,7 +50,7 @@ def get_gerrit_lastest_change_revision(base_url, change_id):
 
     return latest_revision
 
-def checkout_gerrit_change_https(base_url, repo, change_id):
+def checkout_gerrit_change_https(base_url, repo, change_id, force):
     # Get latest revision
     print("Retrieving latest revision for change", change_id)
     revision = get_gerrit_lastest_change_revision(base_url, change_id)
@@ -66,9 +66,9 @@ def checkout_gerrit_change_https(base_url, repo, change_id):
 
     # Get fetched commit hash and existing branch commit hash (if exists)
     branch = f"gerrit_{change_id}"
-    fetch_commit = run_command("git rev-parse FETCH_HEAD", stdout=Stdout.return_back()).stdout.strip()
+    fetch_commit = run_command("git rev-parse FETCH_HEAD", stdout=Stdout.return_back(), stderr=Stdout.ignore()).stdout.strip()
     try:
-        existing_commit = run_command(f"git rev-parse {branch}", stdout=Stdout.return_back()).stdout.strip()
+        existing_commit = run_command(f"git rev-parse {branch}", stdout=Stdout.return_back(), stderr=Stdout.ignore()).stdout.strip()
     except CommandError:
         existing_commit = None
 
@@ -77,6 +77,11 @@ def checkout_gerrit_change_https(base_url, repo, change_id):
         if existing_commit == fetch_commit:
             run_command(f"git checkout {branch}")
             print(f"Branch {branch} already exists and is up to date.")
+        elif force:
+            print(f"Branch {branch} already exists but points to a different commit - {existing_commit[:7]}. Recreating it.")
+            run_command("git checkout -f FETCH_HEAD")
+            run_command(f"git branch -D {branch}")
+            run_command(f"git checkout -b {branch}")
         else:
             raise GerritError(f"Branch {branch} already exists but points to a different commit. Please delete it first.")
     else:
