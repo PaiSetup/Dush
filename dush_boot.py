@@ -4,6 +4,7 @@ import platform
 from pathlib import Path, PurePosixPath
 
 is_windows = platform.system() == "Windows"
+is_linux = platform.system() == "Linux"
 home = Path.home()
 dush_path = Path(__file__).parent
 dush_path_bash_on_windows = ""
@@ -56,12 +57,14 @@ def create_profile_symlinks():
 def generate_sample_bash_profile():
     dush_path_bash = convert_path_to_bash_compatible(dush_path)
 
+    dos2unix_line = ". $DUSH_PATH/framework/dos2unix.sh 2>/dev/null\n" if is_linux else ""
+
     return f"""\
 PYTHONPATH="{dush_path_bash}{pythonpath_separator}$PYTHONPATH"
 DUSH_PATH="{dush_path_bash}"
 DUSH_WORKSPACE="{dush_path_bash.parent}"
 DUSH_ENABLE_AUTOLOAD=1
-. $DUSH_PATH/framework/frontend.bash
+{dos2unix_line}. $DUSH_PATH/framework/frontend.bash
 . $DUSH_PATH/projects/bashies/main.sh
 . $DUSH_PATH/projects/yuview/main.sh"""
 
