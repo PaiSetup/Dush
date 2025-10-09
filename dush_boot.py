@@ -42,6 +42,7 @@ def create_profile_symlinks():
 
         if not real_path.exists():
             if create_if_missing:
+                real_path.parent.mkdir(parents=True, exist_ok=True)
                 real_path.touch()
             else:
                 continue
