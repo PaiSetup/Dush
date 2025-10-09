@@ -3,12 +3,7 @@ import re
 from pathlib import Path
 
 from framework import *
-from utils.paths import EnvPath
-
-# This variable points to a directory which contains all of the developer's work projects.
-workspace_path = EnvPath("DUSH_WORKSPACE", lazy_resolve=False)
-dush_path = EnvPath("DUSH_PATH", lazy_resolve=False)
-
+from utils import *
 
 class DushProject:
     def __init__(self, path):

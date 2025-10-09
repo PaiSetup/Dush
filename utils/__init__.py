@@ -1,7 +1,7 @@
 from utils.arg import OptionEnable, interpret_arg
 from utils.build_config import Bitness, BuildConfig, BuildType, Compiler
 from utils.os_function import is_linux, is_windows, linux_only, windows_only
-from utils.paths import EnvPath, HardcodedPath, LocalOrRemotePath, RaiiChdir
+from utils.paths import EnvPath, HardcodedPath, LocalOrRemotePath, RaiiChdir, dush_path, workspace_path
 from utils.project_dir import (
     DushProject,
     get_project_dir,

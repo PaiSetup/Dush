@@ -109,3 +109,7 @@ class LocalOrRemotePath:
 
     def __truediv__(self, other):
         return LocalOrRemotePath(path=self._path / other, is_ssh=self._is_ssh, ssh_host=self._ssh_host)
+
+# This variable points to a directory which contains all of the developer's work projects.
+workspace_path = EnvPath("DUSH_WORKSPACE", lazy_resolve=False)
+dush_path = EnvPath("DUSH_PATH", lazy_resolve=False)
