@@ -244,7 +244,7 @@ _dush_project_dir_list() {
 	}
 
 	echo "$project_name_friendly workspaces:"
-	for workspace in $(find $DUSH_WORKSPACE/ -maxdepth 1 -regex ".*/$project_name""[0-9]*$"); do
+	for workspace in $(find $DUSH_WORKSPACE/ -maxdepth 1 -regex ".*/$project_name""[0-9]*$" | sort); do
 		branch="$(get_branchname "$workspace/$project_dir_inside_root")"
 		echo "    $workspace     $branch"
 	done
