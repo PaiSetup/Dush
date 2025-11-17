@@ -6,11 +6,13 @@ from utils.os_function import is_windows
 class Compiler(Enum):
     VisualStudio = 1
     Ninja = 2
+    Makefiles = 3
 
     def __str__(self):
         return {
             Compiler.VisualStudio: "vs",
             Compiler.Ninja: "ninja",
+            Compiler.Makefiles: "makefiles",
         }[self]
 
 
@@ -86,6 +88,7 @@ class BuildConfig:
             ("rd", BuildType.RelWithDebInfo),
             ("r", BuildType.Release),
             ("ninja", Compiler.Ninja),
+            ("makefiles", Compiler.Makefiles),
         ]
         if is_windows():
             supported_tokens.append(("vs", Compiler.VisualStudio))

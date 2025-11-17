@@ -10,24 +10,31 @@ class IncorrectGitWorkspaceError(Exception):
 
 
 def generate_config_options(config):
-    options = ""
-    if config.compiler == Compiler.VisualStudio:
-        options += f' -G "Visual Studio 17 2022"'
-        if config.bitness == Bitness.x64:
-            options += " -A x64 -T host=x64"
-        elif config.bitness == Bitness.x32:
-            options += " -A Win32 -T host=x86"
-        else:
-            raise KeyError("Unsupported bitness")
-    elif config.compiler == Compiler.Ninja:
-        options += " -G Ninja"
+    def append_linux_single_config_32bit_options(config, options):
         if is_linux() and config.bitness == Bitness.x32:
-            options += [
-                "-DCMAKE_C_FLAGS=-m32",
-                "-DCMAKE_CXX_FLAGS=-m32",
-            ]
-    else:
-        raise KeyError("Unsupported bitness")
+            options += " -DCMAKE_C_FLAGS=-m32 -DCMAKE_CXX_FLAGS=-m32"
+        return options
+
+    options = ""
+    match config.compiler:
+        case Compiler.VisualStudio:
+            options += f' -G "Visual Studio 17 2022"'
+            if config.bitness == Bitness.x64:
+                options += " -A x64 -T host=x64"
+            elif config.bitness == Bitness.x32:
+                options += " -A Win32 -T host=x86"
+            else:
+                raise KeyError("Unsupported bitness")
+        case Compiler.Ninja:
+            options += " -G Ninja"
+            options += f" -DCMAKE_BUILD_TYPE={str(config.build_type)}"
+            options = append_linux_single_config_32bit_options(config, options)
+        case Compiler.Makefiles:
+            options += ' -G "Unix Makefiles"'
+            options += f" -DCMAKE_BUILD_TYPE={str(config.build_type)}"
+            options = append_linux_single_config_32bit_options(config, options)
+        case _:
+            raise KeyError("Unsupported compiler")
     return options
 
 
