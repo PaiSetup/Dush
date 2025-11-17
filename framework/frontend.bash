@@ -85,7 +85,7 @@ dush_init_project() {
 	config["main_func"]="$main_func"
 
 	# Define known keys. All project's config.ini should define those keys and only those keys.
-	local known_keys=(name name_friendly dir_inside_root has_repository has_main_command has_bash_scripts has_python_scripts
+	local known_keys=(name name_friendly name_directory dir_inside_root has_repository has_main_command has_bash_scripts has_python_scripts
 	                  has_git_submodules upstream_url upstream_main_branch upstream_dev_branch)
 
 	# Read config from .ini file, that is shared with Python.
@@ -225,7 +225,7 @@ _dush_project_python_script() {
 
 # --------------------------------------------------------------------- Managing project's code repositories
 _dush_project_dir_list() {
-	local project_name=${config["name"]}
+	local project_directory_name=${config["name_directory"]}
 	local project_name_friendly=${config["name_friendly"]}
 	local project_dir_inside_root=${config["dir_inside_root"]}
 
@@ -244,7 +244,7 @@ _dush_project_dir_list() {
 	}
 
 	echo "$project_name_friendly workspaces:"
-	for workspace in $(find $DUSH_WORKSPACE/ -maxdepth 1 -regex ".*/$project_name""[0-9]*$" | sort); do
+	for workspace in $(find $DUSH_WORKSPACE/ -maxdepth 1 -regex ".*/$project_directory_name""[0-9]*$" | sort); do
 		branch="$(get_branchname "$workspace/$project_dir_inside_root")"
 		echo "    $workspace     $branch"
 	done
@@ -252,16 +252,16 @@ _dush_project_dir_list() {
 
 _dush_project_dir_cd() {
 	local index="$1"
-	local project_name=${config["name"]}
+	local project_directory_name=${config["name_directory"]}
 	local project_dir_inside_root=${config["dir_inside_root"]}
 
-	cd "$DUSH_WORKSPACE/$project_name$index/$project_dir_inside_root" 2>/dev/null && return 0
+	cd "$DUSH_WORKSPACE/$project_directory_name$index/$project_dir_inside_root" 2>/dev/null && return 0
 
 	if [ "$index" = 1 ]; then
-		cd "$DUSH_WORKSPACE/$project_name/$project_dir_inside_root" 2>/dev/null && return 0
+		cd "$DUSH_WORKSPACE/$project_directory_name/$project_dir_inside_root" 2>/dev/null && return 0
 	fi
 
-	echo "Could not cd to $project_name directory."
+	echo "Could not cd to $project_directory_name directory."
 	return 1
 }
 

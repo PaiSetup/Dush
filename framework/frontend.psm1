@@ -25,7 +25,7 @@ function dush_init_project() {
 	$config["main_func"] = $main_func
 
     # Define known keys. All project's config.ini should define those keys and only those keys.
-    $known_keys = ("name", "name_friendly", "dir_inside_root", "has_repository", "has_main_command", "has_bash_scripts",`
+    $known_keys = ("name", "name_friendly", "project_directory_name", "dir_inside_root", "has_repository", "has_main_command", "has_bash_scripts",`
                    "has_git_submodules", "has_python_scripts", "upstream_url", "upstream_main_branch", "upstream_dev_branch")
 
 	# Read config from .ini file, that is shared with Python.
@@ -140,7 +140,7 @@ function _dush_project_python_script() {
 function _dush_project_dir_list() {
     param($config)
 
-	$project_name = $config["name"]
+	$project_directory_name = $config["name_directory"]
 	$project_name_friendly = $config["name_friendly"]
 	$project_dir_inside_root = $config["dir_inside_root"]
 
@@ -165,7 +165,7 @@ function _dush_project_dir_list() {
 	}
 
 	Write-Output "$project_name_friendly workspaces:"
-    $workspaces = Get-ChildItem $env:DUSH_WORKSPACE | Where-Object { $_.PSIsContainer -eq $true -and $_.Name -match "^$project_name[0-9]*$" }
+    $workspaces = Get-ChildItem $env:DUSH_WORKSPACE | Where-Object { $_.PSIsContainer -eq $true -and $_.Name -match "^$project_directory_name[0-9]*$" }
 	foreach ($workspace in $workspaces) {
         $workspace_path = $workspace.FullName
         $branch = get_branchname $workspace_path/$project_dir_inside_root
@@ -179,16 +179,16 @@ function _dush_project_dir_cd() {
         [int] $index
     )
 
-	$project_name = $config["name"]
+	$project_directory_name = $config["name_directory"]
 	$project_dir_inside_root = $config["dir_inside_root"]
 
-	Set-Location "$env:DUSH_WORKSPACE/$project_name$index/$project_dir_inside_root"
+	Set-Location "$env:DUSH_WORKSPACE/$project_directory_name$index/$project_dir_inside_root"
     if ($?) {
         return
     }
 
     if ($index -eq "1") {
-        Set-Location "$env:DUSH_WORKSPACE/$project_name/$project_dir_inside_root"
+        Set-Location "$env:DUSH_WORKSPACE/$project_directory_name/$project_dir_inside_root"
         if ($?) {
             return
         }
