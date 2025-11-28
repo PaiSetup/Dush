@@ -79,8 +79,9 @@ def fetch(branch="master"):
     run_command(f"git fetch origin {branch} --prune --recurse-submodules=no")
 
 
-def checkout(branch):
-    run_command(f"git checkout {branch}")
+def checkout(branch, force=False):
+    force_option = " -f" if force else ""
+    run_command(f"git checkout{force_option} {branch}")
 
 
 def cherrypick(commit):

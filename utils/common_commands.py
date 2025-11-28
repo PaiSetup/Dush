@@ -15,14 +15,15 @@ def clean_all():
 
 
 @command
-def top(clean_all=False):
+def top(clean_all=False, force=False):
     clean_all = interpret_arg(clean_all, bool, "clean_all")
+    force = interpret_arg(force, bool, "force")
 
     get_project_dir()
     upstream_dev_branch_local = f"origin/{repo.upstream_dev_branch}"
 
     core.fetch(repo.upstream_dev_branch)
-    core.checkout(upstream_dev_branch_local)
+    core.checkout(upstream_dev_branch_local, force=force)
     if has_submodules:
         core.update_submodules()
     if clean_all:
