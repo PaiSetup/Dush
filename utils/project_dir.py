@@ -5,6 +5,7 @@ from pathlib import Path
 from framework import *
 from utils import *
 
+
 class DushProject:
     def __init__(self, path):
         self.path = Path(path)
@@ -125,7 +126,9 @@ def get_project_dir(root_name_prefix=None, suffix=None, do_chdir=True):
         raise IncorrectProjectDirectory(f"not a {root_name_prefix} repo")
 
     # Compose the project path
-    new_cwd = workspace_path / subdir / suffix
+    new_cwd = workspace_path / subdir
+    if suffix and suffix != ".":
+        new_cwd = new_cwd / suffix
 
     # cd to the path if requested
     if do_chdir:
