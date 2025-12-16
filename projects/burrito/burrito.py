@@ -129,6 +129,15 @@ def run(perform_compilation=False):
     run_command(str(executable))
 
 
+@command
+def open_in_godot():
+    project_dir = get_project_dir()
+    godot_bin_dir = get_godot_binary_dir(project_dir)
+    godot_gui = get_godot_gui(godot_bin_dir)
+
+    run_command(f"{godot_gui} project.godot", stdout=Stdout.ignore(), stderr=Stdout.ignore())
+
+
 # ----------------------------------------------------------- Main procedure
 if is_main:
     BuildConfig.configure(
