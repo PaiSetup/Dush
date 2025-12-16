@@ -92,29 +92,27 @@ def download_build_dependencies():
     templates_dir = Path(os.getenv("HOME")) / f".local/share/godot/templates/{godot_version}.stable"
     download_and_unpack_zip(url, templates_dir, directory_inside_zip="templates")
 
-    # TODO add ignore of the tmp dir
-
 
 @command
-def compile():
+def compile(compile_burrito_fg=True, compile_taco_parser=True, compile_gui=True):
+    compile_burrito_fg = interpret_arg(compile_burrito_fg, bool, "compile_burrito_fg")
+    compile_taco_parser = interpret_arg(compile_taco_parser, bool, "compile_taco_parser")
+    compile_gui = interpret_arg(compile_gui, bool, "compile_gui")
+
     project_dir = get_project_dir()
     build_dir = get_build_dir(project_dir)
     executable = get_executable(build_dir)
     godot_bin_dir = get_godot_binary_dir(project_dir)
     godot_cli = get_godot_cli(godot_bin_dir)
 
-    # Fake The GDNative Files
-    p = Path(f"{project_dir}/burrito-fg/target/release/libburrito_fg.so")
-    p.parent.mkdir(parents=True, exist_ok=True)
-    p.touch()
-    p = Path(f"{project_dir}/taco_parser/target/release/libgw2_taco_parser.so")
-    p.parent.mkdir(parents=True, exist_ok=True)
-    p.touch()
-
-    # Build
-    build_dir.mkdir(exist_ok=True)
-    run_command(f"{godot_cli} --export Linux/X11")
-    run_command(f"chmod +x {executable}")
+    if compile_burrito_fg:
+        run_command("cargo build --release", cwd=project_dir / "burrito-fg")
+    if compile_taco_parser:
+        run_command("cargo build --release", cwd=project_dir / "taco_parser")
+    if compile_gui:
+        build_dir.mkdir(exist_ok=True)
+        run_command(f"{godot_cli} --export Linux/X11")
+        run_command(f"chmod +x {executable}")
 
 
 @command
