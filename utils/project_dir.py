@@ -104,7 +104,7 @@ def get_project_dir(root_name_prefix=None, suffix=None, do_chdir=True):
     if suffix is None:
         suffix = project_repositories.get_main().dir_inside_root
     if root_name_prefix is None:
-        root_name_prefix = project_repositories.get_main().name
+        root_name_prefix = project_repositories.get_main().name_directory
 
     if framework.get_framework_args().project_dir_force is not None:
         root_name_prefix = framework.get_framework_args().project_dir_force

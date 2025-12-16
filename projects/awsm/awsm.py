@@ -27,7 +27,7 @@ def get_install_dir(build_dir):
 def cmake(config=""):
     config = interpret_arg(config, BuildConfig, "config")
 
-    project_dir = get_project_dir("awesome")
+    project_dir = get_project_dir()
     build_dir = get_build_dir(project_dir, config)
     install_dir = get_install_dir(build_dir)
 
@@ -41,7 +41,7 @@ def cmake(config=""):
 def compile(config=""):
     config = interpret_arg(config, BuildConfig, "config")
 
-    project_dir = get_project_dir("awesome")
+    project_dir = get_project_dir()
     build_dir = get_build_dir(project_dir, config)
 
     core.compile_with_make("", build_dir)
@@ -53,7 +53,7 @@ def test(config="", use_default_config=False):
     config = interpret_arg(config, BuildConfig, "config")
     use_default_config = interpret_arg(use_default_config, bool, "use_default_config")
 
-    project_dir = get_project_dir("awesome")
+    project_dir = get_project_dir()
     build_dir = get_build_dir(project_dir, config)
     install_dir = get_install_dir(build_dir)
     binary_path = install_dir / "bin/awesome"
@@ -87,7 +87,7 @@ def clear_test_xorg_locks():
 def run_integration_tests(config=""):
     config = interpret_arg(config, BuildConfig, "config")
 
-    project_dir = get_project_dir("awesome")
+    project_dir = get_project_dir()
     build_dir = get_build_dir(project_dir, config)
 
     core.compile_with_make("", build_dir)
