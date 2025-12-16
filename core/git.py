@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from utils import CommandError, RaiiChdir, Stdout, run_command
 
 
@@ -14,6 +16,49 @@ except ImportError:
 
 class IncorrectProjectDirectory(Exception):
     pass
+
+
+def add_transient_gitignore(path_to_ignore):
+    def find_exclude_file(git_dir):
+        if git_dir.is_dir():
+            # We are in a normal git repository with a .git directory
+            return git_dir / "info/exclude"
+        elif git_dir.is_file():
+            # We are in a submodule with a .git file. It contains a path
+            # to the git directory of this module.
+            with open(".git", "r") as file:
+                for line in file.readlines():
+                    prefix = "gitdir: "
+                    if line.startswith(prefix):
+                        module_git_dir = line[len(prefix) :]
+                        module_git_dir = module_git_dir.strip()
+                        module_git_dir = git_dir.parent / module_git_dir
+                        module_git_dir = module_git_dir.resolve()
+                        return find_exclude_file(module_git_dir)
+            raise IncorrectGitWorkspaceError(f"{git_dir} does not contain gitdir line")
+        else:
+            raise IncorrectGitWorkspaceError(f"{git_dir} does not exist")
+
+    # Get the path to exclude file
+    top_level_dir = run_command("git rev-parse --show-toplevel", stdout=Stdout.return_back()).stdout
+    top_level_dir = top_level_dir.strip()
+    top_level_dir = Path(top_level_dir)
+    git_dir = top_level_dir / ".git"
+    exclude_file = find_exclude_file(git_dir)
+
+    # Gather existing lines in the exclude file
+    with open(exclude_file, "r") as file:
+        existing_lines = file.read()
+        existing_lines = existing_lines.split("\n")
+
+    # Add build dir if neccessary
+    path_to_ignore = path_to_ignore.relative_to(top_level_dir)
+    path_to_ignore = str(path_to_ignore)
+    if path_to_ignore not in existing_lines:
+        with open(exclude_file, "w") as file:
+            for line in existing_lines:
+                file.write(f"{line}\n")
+            file.write(f"{path_to_ignore}\n")
 
 
 def reset_repo(directory="."):

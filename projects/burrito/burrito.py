@@ -73,6 +73,7 @@ def download_build_dependencies():
 
     project_dir = get_project_dir()
     bin_dir = get_godot_binary_dir(project_dir)
+    core.add_transient_gitignore(bin_dir)
     godot_cli = get_godot_cli(bin_dir)
     godot_gui = get_godot_gui(bin_dir)
 

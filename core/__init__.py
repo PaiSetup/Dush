@@ -10,6 +10,7 @@ from core.compile import (
 )
 from core.gerrit import checkout_gerrit_change_https, push_gerrit_change
 from core.git import (
+    add_transient_gitignore,
     checkout,
     cherrypick,
     fetch,
