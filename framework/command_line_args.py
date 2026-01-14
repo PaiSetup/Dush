@@ -13,7 +13,9 @@ class CommandLineArgs:
         self._process_name = None
         self._command_args = None
         self._command_kwargs = None
-        self.framework_args_parsed = None
+        self._framework_args = argparse.Namespace()
+        for action in self._framework_args_parser._actions:
+            setattr(self._framework_args, action.dest, action.default)
 
     def parse(self, command_controller, args):
         # Get process name

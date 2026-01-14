@@ -30,6 +30,6 @@ def find_build_and_source_directory():
     return (build_dir, cwd)
 
 build_dir, source_dir = find_build_and_source_directory()
-forwarded_args = ' '.join(sys.argv[1:]) # TODO is this correct? Check with stuff like quoted strings with spaces
+forwarded_args = ' '.join((f'"{x}"' for x in sys.argv[1:]))
 command = f"cmake -B {build_dir} -S {source_dir} {forwarded_args}"
 run_command(command)
