@@ -15,8 +15,8 @@ def clean_all():
 
 
 @command
-def top(clean_all=False, force=False):
-    clean_all = interpret_arg(clean_all, bool, "clean_all")
+def top(perform_clean_all=False, force=False):
+    perform_clean_all = interpret_arg(perform_clean_all, bool, "perform_clean_all")
     force = interpret_arg(force, bool, "force")
 
     get_project_dir()
@@ -26,7 +26,7 @@ def top(clean_all=False, force=False):
     core.checkout(upstream_dev_branch_local, force=force)
     if has_submodules:
         core.update_submodules()
-    if clean_all:
+    if perform_clean_all:
         if not has_clean_command:
             raise ValueError("Cannot perform clean, because 'clean' command is not defined.")
         clean_all()
