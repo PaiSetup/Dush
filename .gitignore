@@ -1,8 +1,8 @@
 .vscode
 *.py[cod]
-projects/amd
-projects/intel
-projects/nvidia
+dush/projects/amd
+dush/projects/intel
+dush/projects/nvidia
 **/commands.cache
 desktop.ini
 links
