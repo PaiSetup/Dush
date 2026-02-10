@@ -57,26 +57,26 @@ def create_profile_symlinks():
 def generate_sample_bash_profile():
     dush_path_bash = convert_path_to_bash_compatible(dush_path)
 
-    dos2unix_line = ". $DUSH_PATH/framework/dos2unix.sh 2>/dev/null\n" if is_linux else ""
+    dos2unix_line = ". $DUSH_PATH/dush/framework/dos2unix.sh 2>/dev/null\n" if is_linux else ""
 
     return f"""\
 PYTHONPATH="{dush_path_bash}{pythonpath_separator}$PYTHONPATH"
 DUSH_PATH="{dush_path_bash}"
 DUSH_WORKSPACE="{dush_path_bash.parent}"
 DUSH_ENABLE_AUTOLOAD=1
-{dos2unix_line}. $DUSH_PATH/framework/frontend.bash
-. $DUSH_PATH/projects/bashies/main.sh
-. $DUSH_PATH/projects/yuview/main.sh"""
+{dos2unix_line}. $DUSH_PATH/dush/framework/frontend.bash
+. $DUSH_PATH/dush/projects/bashies/main.sh
+. $DUSH_PATH/dush/projects/yuview/main.sh"""
 
 
 def generate_sample_powershell_profile():
     return f"""\
 $env:PYTHONPATH = "{dush_path}{pythonpath_separator}$env:PYTHONPATH"
-$env:DUSH_WORKSPACE = "C:/develop"
-$env:DUSH_PATH = "C:/develop/dush"
+$env:DUSH_WORKSPACE = "{dush_path.parent}"
+$env:DUSH_PATH = "{dush_path}"
 $env:DUSH_ENABLE_AUTOLOAD = $true
-Import-Module $env:DUSH_PATH/projects/bashies/main.ps1
-Import-Module $env:DUSH_PATH/projects/yuview/main.ps1"""
+Import-Module $env:DUSH_PATH/dush/projects/bashies/main.ps1
+Import-Module $env:DUSH_PATH/dush/projects/yuview/main.ps1"""
 
 
 def print_section(name, content):
