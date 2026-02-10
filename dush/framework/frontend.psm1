@@ -25,7 +25,7 @@ function dush_init_project() {
 	$config["main_func"] = $main_func
 
     # Define known keys. All project's config.ini should define those keys and only those keys.
-    $known_keys = ("name", "name_friendly", "project_directory_name", "dir_inside_root", "has_repository", "has_main_command", "has_bash_scripts",`
+    $known_keys = ("name", "name_friendly", "name_directory", "dir_inside_root", "has_repository", "has_main_command", "has_bash_scripts",`
                    "has_git_submodules", "has_python_scripts", "upstream_url", "upstream_main_branch", "upstream_dev_branch")
 
 	# Read config from .ini file, that is shared with Python.
