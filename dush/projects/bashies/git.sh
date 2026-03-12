@@ -25,8 +25,8 @@ poi() (
     log -10
 
     echo
-    echo "> git branch"
-    git branch
+    echo "> git branch -vv"
+    git branch -vv
 
     echo
     echo "> git status"
