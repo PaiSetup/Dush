@@ -8,10 +8,10 @@ has_clean_command = framework.get_command("clean") is not None
 
 
 @command_conditional(has_clean_command)
-def clean_all():
+def clean_all(*args, **kwargs):
     clean_command = framework.get_command("clean")
     for config in BuildConfig.all_permutations():
-        clean_command(config)
+        clean_command(config, *args, **kwargs)
 
 
 @command
