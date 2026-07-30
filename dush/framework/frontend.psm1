@@ -270,7 +270,7 @@ function _dush_load_powershell_scripts_as_powershell_functions() {
             continue
         }
 
-        $function_definition = "function global:$script_name() { $script_path `$args }"
+        $function_definition = "function global:$script_name() { $script_path @args }"
         Invoke-Expression $function_definition
     }
 }
