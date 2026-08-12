@@ -1,3 +1,8 @@
+# Initialize Dush framework.
+$env:DUSH_PYTHON_COMMAND="python"
+$env:DUSH_IS_WINDOWS="1"
+$env:DUSH_IS_LINUX="0"
+
 # --------------------------------------------------------------------- project initialization
 function dush_init_project() {
     param (

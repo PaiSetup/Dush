@@ -17,7 +17,7 @@ if [ "$DUSH_INITIALIZED" != "1" ]; then
 
 	# Prepare Python command. Gitbash on Windows inside mintty requires a special invocation.
 	if [ -z "$DUSH_PYTHON_COMMAND" ]; then
-		DUSH_PYTHON_COMMAND="python"
+		export DUSH_PYTHON_COMMAND="python"
 	fi
 	if [ $DUSH_IS_WINDOWS = 1 ]; then
 		# Detect whether we are running inside mintty, that does not connect to a TTY, so we
@@ -28,7 +28,7 @@ if [ "$DUSH_INITIALIZED" != "1" ]; then
 		# parent PID is always 1 for some reason. But this is good enough to detect mintty.
 		terminal="$(ps -f | awk -v pid=$PPID '$2 == pid { print $6 }')"
 		if [[ "$terminal" =~ "/mintty" ]]; then
-			DUSH_PYTHON_COMMAND="winpty -Xallow-non-tty -Xplain $DUSH_PYTHON_COMMAND"
+			export DUSH_PYTHON_COMMAND="winpty -Xallow-non-tty -Xplain $DUSH_PYTHON_COMMAND"
 		fi
 	fi
 
