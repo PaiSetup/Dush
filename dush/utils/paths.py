@@ -1,5 +1,5 @@
 import os
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 
 
 class PredefinedPath:
@@ -79,7 +79,7 @@ class RaiiChdir:
 
 class LocalOrRemotePath:
     def __init__(self, path, is_ssh, ssh_host):
-        self._path = Path(path)
+        self._path = PurePosixPath(path) if is_ssh else Path(path)
         self._is_ssh = is_ssh
         self._ssh_host = ssh_host
 
@@ -97,6 +97,11 @@ class LocalOrRemotePath:
     def is_mounted(self):
         return not self._is_ssh
 
+    def get_ssh_host(self):
+        if not self._is_ssh:
+            raise ValueError("This path is not an SSH path")
+        return self._ssh_host
+
     def get_ssh_full_path(self):
         if not self._is_ssh:
             raise ValueError("This path is not an SSH path")
@@ -105,6 +110,10 @@ class LocalOrRemotePath:
     def get_mounted_full_path(self):
         if self._is_ssh:
             raise ValueError("This path is not a mounted path")
+        return self._path
+
+    def get_path(self):
+        """Path as seen by the machine it points to, no matter if it is a local or a remote one."""
         return self._path
 
     def __truediv__(self, other):
