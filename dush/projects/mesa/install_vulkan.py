@@ -36,6 +36,8 @@ if is_linux():
         The manifest from the build directory is not reused, because it points to the system driver location.
         The switchable graphics layer it declares is skipped, we have no use for it.
         """
+        # If the destination directory does not exist, scp silently creates a file in its place instead of failing
+        run_command(f"ssh {dst_dir.get_ssh_host()} mkdir -p {shlex.quote(str(dst_dir.get_path()))}")
         core.install(binary_dir, dst_dir, [driver_name], None)
 
         driver_path = (dst_dir / driver_name).get_path()
