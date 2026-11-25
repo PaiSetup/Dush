@@ -13,6 +13,15 @@ def interpret_arg(arg, arg_type, name, **kwargs):
         if not allow_empty and len(arg.strip()) == 0:
             raise ValueError(f"Argument {name} must not be empty")
         return arg
+    elif arg_type == list[str]:
+        if type(arg) == list:
+            return arg
+        elif arg is None or arg == "":
+            return []
+        elif type(arg) == str:
+            return arg.split(',')
+        else:
+            raise ValueError("Argument must be a comma separated list of strings")
     elif type(arg) == arg_type:
         return arg
     elif arg_type == bool:
